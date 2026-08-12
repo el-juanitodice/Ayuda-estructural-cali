@@ -21,6 +21,8 @@ import rutasReportes from './rutas/reportes.js';
 import rutasFotos from './rutas/fotos.js';
 import rutasModeracion from './rutas/moderacion.js';
 import rutasAdmin from './rutas/admin.js';
+import rutasCampo from './rutas/campo.js';
+import rutasTablero from './rutas/tablero.js';
 
 const faltan = validarConfig();
 if (faltan.length) {
@@ -72,7 +74,7 @@ const salud = async (req, reply) => {
 app.get('/salud', salud);
 app.get('/api/v1/salud', salud); // la ruta que usa el healthcheck de railway.json
 
-for (const rutas of [rutasAuth, rutasReportes, rutasFotos, rutasModeracion, rutasAdmin]) {
+for (const rutas of [rutasAuth, rutasReportes, rutasFotos, rutasModeracion, rutasAdmin, rutasCampo, rutasTablero]) {
   await app.register(rutas, { prefix: '/api/v1' });
 }
 

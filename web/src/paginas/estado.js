@@ -1,7 +1,7 @@
 /** Consulta ciudadana por número de radicado. Solo estado y fechas. */
 
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import htm from 'htm';
 import { get } from '../api.js';
 
@@ -24,10 +24,17 @@ const COLOR_TEXTO = {
   naranja: 'NO HABITABLE', rojo: 'PELIGRO DE COLAPSO',
 };
 
-export function PaginaEstado() {
-  const [radicado, setRadicado] = useState('');
+export function PaginaEstado({ radicadoInicial = '' }) {
+  const [radicado, setRadicado] = useState(radicadoInicial);
   const [r, setR] = useState(null);
   const [error, setError] = useState(null);
+
+  // Llegada por QR del aviso físico: consulta directa
+  useEffect(() => {
+    if (radicadoInicial) {
+      get(`/reportes/${radicadoInicial.toUpperCase()}/estado`).then(setR).catch((e) => setError(e.message));
+    }
+  }, [radicadoInicial]);
 
   const consultar = async (ev) => {
     ev.preventDefault();

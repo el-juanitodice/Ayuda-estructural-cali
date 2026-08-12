@@ -3,7 +3,7 @@
  * El API firma URLs; los bytes de las fotos JAMÁS pasan por aquí.
  */
 
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from './config.js';
 
@@ -22,6 +22,15 @@ export function prefirmarPut(key, contentType) {
   return getSignedUrl(
     s3,
     new PutObjectCommand({ Bucket: config.s3.bucket, Key: key, ContentType: contentType }),
+    { expiresIn: config.s3.urlTtlSegundos },
+  );
+}
+
+/** URL prefirmada de LECTURA. El bucket es privado: esta es la única vía. */
+export function prefirmarGet(key) {
+  return getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: config.s3.bucket, Key: key }),
     { expiresIn: config.s3.urlTtlSegundos },
   );
 }

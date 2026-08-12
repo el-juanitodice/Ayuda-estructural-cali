@@ -14,6 +14,10 @@ import { PaginaMapa } from './paginas/mapa.js';
 import { PaginaLogin, PaginaDefinirClave } from './paginas/login.js';
 import { PaginaModeracion } from './paginas/moderacion.js';
 import { PaginaAdmin } from './paginas/admin.js';
+import { PaginaIngeniero } from './paginas/ingeniero.js';
+import { PaginaDictamen } from './paginas/dictamen.js';
+import { PaginaAviso } from './paginas/aviso.js';
+import { PaginaTablero } from './paginas/tablero.js';
 import './estilos.css';
 
 const html = htm.bind(h);
@@ -45,9 +49,15 @@ function App() {
 
   const pendientes = cola ? cola.pendiente + cola.subiendo : 0;
 
+  const conSesion = (paginaSi) => (usuario ? paginaSi : html`<${PaginaLogin} alEntrar=${setUsuario} />`);
+
   let pagina;
   if (ruta === '/reportar') pagina = html`<${PaginaReportar} />`;
-  else if (ruta === '/estado') pagina = html`<${PaginaEstado} />`;
+  else if (ruta === '/estado') pagina = html`<${PaginaEstado} radicadoInicial=${params.get('radicado') || ''} />`;
+  else if (ruta === '/campo') pagina = conSesion(html`<${PaginaIngeniero} />`);
+  else if (ruta === '/revision') pagina = conSesion(html`<${PaginaDictamen} />`);
+  else if (ruta === '/aviso') pagina = conSesion(html`<${PaginaAviso} uuid=${params.get('uuid')} />`);
+  else if (ruta === '/tablero') pagina = conSesion(html`<${PaginaTablero} />`);
   else if (ruta === '/ingreso') pagina = html`<${PaginaLogin} alEntrar=${(u) => { setUsuario(u); location.hash = u.rol === 'admin' ? '#/admin' : '#/moderacion'; }} />`;
   else if (ruta === '/definir-clave' || ruta === '/recuperar-clave') {
     pagina = html`<${PaginaDefinirClave} token=${params.get('token') || ''} />`;
@@ -67,7 +77,10 @@ function App() {
           <span class="chip-cola" title="Fotos pendientes de subir">📷 ${pendientes}</span>`}
         ${usuario
           ? html`
+            ${['ingeniero_a', 'ingeniero_b'].includes(usuario.rol) && html`<a href="#/campo">Campo</a>`}
+            ${usuario.rol === 'ingeniero_a' && html`<a href="#/revision">Revisión</a>`}
             ${['moderador', 'admin'].includes(usuario.rol) && html`<a href="#/moderacion">Moderación</a>`}
+            ${['coordinador', 'admin'].includes(usuario.rol) && html`<a href="#/tablero">Tablero</a>`}
             ${usuario.rol === 'admin' && html`<a href="#/admin">Admin</a>`}
             <a href="#/" onClick=${(e) => { e.preventDefault(); salir(); }}>Salir</a>`
           : html`<a href="#/ingreso">Ingresar</a>`}

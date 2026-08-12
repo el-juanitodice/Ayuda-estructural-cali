@@ -21,6 +21,16 @@ db.version(1).stores({
   cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
 });
 
+// v2 — captura de campo offline (BRIEF §4.1):
+//   asignaciones: copia local de mis-asignaciones para abrir sin señal
+//   formularios : borradores AIS, autoguardado en cada cambio; pendiente=1
+//                 significa que hay cambios sin sincronizar al servidor
+db.version(2).stores({
+  cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
+  asignaciones: 'reporte_uuid',
+  formularios: 'uuid, reporte_uuid, estado, pendiente',
+});
+
 export const ESTADOS = ['pendiente', 'subiendo', 'confirmada', 'fallida'];
 
 /** Al arrancar: nada puede quedar "subiendo" de una sesión anterior. */
