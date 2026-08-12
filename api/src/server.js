@@ -13,6 +13,7 @@ import rateLimit from '@fastify/rate-limit';
 import staticPlugin from '@fastify/static';
 import { config, validarConfig } from './config.js';
 import { sql, verificarPostgis } from './db.js';
+import { aplicarEsquemaSiFalta } from './esquema.js';
 import { configurarSesiones } from './auth/sesiones.js';
 import { iniciarMantenimiento } from './mantenimiento.js';
 import rutasAuth from './rutas/auth.js';
@@ -90,6 +91,7 @@ if (existsSync(distWeb)) {
   app.log.warn('web/dist no existe: corre `npm run build` para servir el front');
 }
 
+await aplicarEsquemaSiFalta(app.log);
 iniciarMantenimiento(app.log);
 
 const cerrar = async () => {
