@@ -1,18 +1,12 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Secretos: NUNCA al repo
+.env
+.env.*
+!.env.example
 
-# Other files and folders
-.settings/
+# Dependencias y build
+node_modules/
+web/dist/
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+# Sistema
+.DS_Store
+Thumbs.db
