@@ -24,6 +24,16 @@ export async function enviarEnlaceClave({ email, nombre, token, proposito, log }
     ? 'Activa tu cuenta — Inspección post-sísmica Cali'
     : 'Recuperación de contraseña — Inspección post-sísmica Cali';
 
+  try {
+    await enviar({ email, nombre, asunto, enlace, proposito });
+  } catch (err) {
+    // El correo NUNCA debe tumbar el flujo (p. ej. dominio aún sin verificar
+    // en Resend): el enlace queda en el log como respaldo.
+    log.error({ err: err.message, email, enlace }, 'Fallo el envío de correo: enlace en el log');
+  }
+}
+
+async function enviar({ email, nombre, asunto, enlace, proposito }) {
   await resend.emails.send({
     from: config.correo.remitente,
     to: email,
