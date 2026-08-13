@@ -359,6 +359,97 @@ function DetalleReporte({
   );
 }
 
+function SenalesReporte({ reporte, atenuada }: { reporte: ReporteCola; atenuada: boolean }) {
+  if (atenuada) {
+    return (
+      <Badge variant="outline" className="font-normal">
+        {ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {reporte.menciona_colapso && (
+        <Badge variant="destructive" className="text-xs">
+          Colapso
+        </Badge>
+      )}
+      {reporte.reportes_del_predio > 1 && (
+        <Badge variant="secondary" className="text-xs">
+          {reporte.reportes_del_predio} predio
+        </Badge>
+      )}
+      {!reporte.menciona_colapso && reporte.reportes_del_predio <= 1 && (
+        <span className="text-xs">En cola</span>
+      )}
+    </div>
+  );
+}
+
+function BotonEliminarReporte({
+  eliminando,
+  onEliminar,
+}: {
+  eliminando: boolean;
+  onEliminar: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="size-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+      disabled={eliminando}
+      title="Eliminar reporte y datos relacionados"
+      onClick={(e) => {
+        e.stopPropagation();
+        onEliminar();
+      }}
+    >
+      <Trash2 className="size-4" />
+    </Button>
+  );
+}
+
+function TarjetaReporteModeracion({
+  reporte,
+  atenuada,
+  eliminando,
+  onAbrir,
+  onEliminar,
+}: {
+  reporte: ReporteCola;
+  atenuada: boolean;
+  eliminando: boolean;
+  onAbrir: () => void;
+  onEliminar: () => void;
+}) {
+  const clickable = !atenuada || puedeAsignar(reporte);
+
+  return (
+    <li
+      className={`px-4 py-3 ${atenuada ? 'text-muted-foreground opacity-70' : ''}${clickable ? ' cursor-pointer active:bg-muted/40' : ''}`}
+      onClick={clickable ? onAbrir : undefined}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="font-mono font-medium">{reporte.consecutivo ?? '—'}</p>
+          <p className={atenuada ? 'text-sm' : 'text-sm font-medium'}>{reporte.direccion}</p>
+          <p className="text-xs">{reporte.barrio || 'Sin barrio'}</p>
+          <p className="text-xs text-muted-foreground">
+            {formatearFecha(atenuada ? reporte.actualizado_en : reporte.creado_en)}
+          </p>
+        </div>
+        <BotonEliminarReporte eliminando={eliminando} onEliminar={onEliminar} />
+      </div>
+      <div className="mt-2">
+        <SenalesReporte reporte={reporte} atenuada={atenuada} />
+      </div>
+    </li>
+  );
+}
+
 function FilaReporte({
   reporte,
   atenuada,
@@ -389,46 +480,13 @@ function FilaReporte({
         <div className="text-xs">{reporte.barrio || 'Sin barrio'}</div>
       </TableCell>
       <TableCell>
-        {atenuada ? (
-          <Badge variant="outline" className="font-normal">
-            {ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}
-          </Badge>
-        ) : (
-          <div className="flex flex-wrap gap-1">
-            {reporte.menciona_colapso && (
-              <Badge variant="destructive" className="text-xs">
-                Colapso
-              </Badge>
-            )}
-            {reporte.reportes_del_predio > 1 && (
-              <Badge variant="secondary" className="text-xs">
-                {reporte.reportes_del_predio} predio
-              </Badge>
-            )}
-            {!reporte.menciona_colapso && reporte.reportes_del_predio <= 1 && (
-              <span className="text-xs">En cola</span>
-            )}
-          </div>
-        )}
+        <SenalesReporte reporte={reporte} atenuada={atenuada} />
       </TableCell>
       <TableCell className="whitespace-nowrap text-xs">
         {formatearFecha(atenuada ? reporte.actualizado_en : reporte.creado_en)}
       </TableCell>
       <TableCell className="text-right">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          disabled={eliminando}
-          title="Eliminar reporte y datos relacionados"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEliminar();
-          }}
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        <BotonEliminarReporte eliminando={eliminando} onEliminar={onEliminar} />
       </TableCell>
     </TableRow>
   );
@@ -530,46 +588,79 @@ export function ModerationPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Radicado</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Señales</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="w-12 text-right" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {enCola.map((r) => (
-                  <FilaReporte
-                    key={r.uuid}
-                    reporte={r}
-                    atenuada={false}
-                    eliminando={eliminandoUuid === r.uuid}
-                    onAbrir={() => abrirReporte(r)}
-                    onEliminar={() => setReporteAEliminar(r)}
-                  />
-                ))}
-                {historial.length > 0 && enCola.length > 0 && (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={5} className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Fuera de cola ({historial.length})
-                    </TableCell>
+            <ul className="divide-y md:hidden">
+              {enCola.map((r) => (
+                <TarjetaReporteModeracion
+                  key={r.uuid}
+                  reporte={r}
+                  atenuada={false}
+                  eliminando={eliminandoUuid === r.uuid}
+                  onAbrir={() => abrirReporte(r)}
+                  onEliminar={() => setReporteAEliminar(r)}
+                />
+              ))}
+              {historial.length > 0 && enCola.length > 0 && (
+                <li className="bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Fuera de cola ({historial.length})
+                </li>
+              )}
+              {historial.map((r) => (
+                <TarjetaReporteModeracion
+                  key={r.uuid}
+                  reporte={r}
+                  atenuada
+                  eliminando={eliminandoUuid === r.uuid}
+                  onAbrir={() => abrirReporte(r)}
+                  onEliminar={() => setReporteAEliminar(r)}
+                />
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
+              <Table className="min-w-[720px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Radicado</TableHead>
+                    <TableHead>Dirección</TableHead>
+                    <TableHead>Señales</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="w-12 text-right" />
                   </TableRow>
-                )}
-                {historial.map((r) => (
-                  <FilaReporte
-                    key={r.uuid}
-                    reporte={r}
-                    atenuada
-                    eliminando={eliminandoUuid === r.uuid}
-                    onAbrir={() => abrirReporte(r)}
-                    onEliminar={() => setReporteAEliminar(r)}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {enCola.map((r) => (
+                    <FilaReporte
+                      key={r.uuid}
+                      reporte={r}
+                      atenuada={false}
+                      eliminando={eliminandoUuid === r.uuid}
+                      onAbrir={() => abrirReporte(r)}
+                      onEliminar={() => setReporteAEliminar(r)}
+                    />
+                  ))}
+                  {historial.length > 0 && enCola.length > 0 && (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={5}
+                        className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        Fuera de cola ({historial.length})
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {historial.map((r) => (
+                    <FilaReporte
+                      key={r.uuid}
+                      reporte={r}
+                      atenuada
+                      eliminando={eliminandoUuid === r.uuid}
+                      onAbrir={() => abrirReporte(r)}
+                      onEliminar={() => setReporteAEliminar(r)}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}

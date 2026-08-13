@@ -68,12 +68,12 @@ export function AdminPage() {
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b px-4 py-3">
+        <CardHeader className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div className="min-w-0">
             <CardTitle className="text-base">Usuarios ({usuarios.length})</CardTitle>
             <p className="text-xs text-muted-foreground">Cuentas del personal — solo administradores</p>
           </div>
-          <Button size="sm" className="shrink-0" onClick={() => setDialogCrearAbierto(true)}>
+          <Button size="sm" className="w-full shrink-0 sm:w-auto" onClick={() => setDialogCrearAbierto(true)}>
             <UserPlus className="size-4" />
             Nueva cuenta
           </Button>

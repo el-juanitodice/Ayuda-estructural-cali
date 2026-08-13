@@ -68,6 +68,70 @@ function formatearFecha(iso: string) {
   return new Date(iso).toLocaleString('es-CO');
 }
 
+function TarjetaRevisionPendiente({
+  item,
+  onAbrir,
+}: {
+  item: ItemColaRevision;
+  onAbrir: () => void;
+}) {
+  return (
+    <li className="px-4 py-3">
+      <div className="space-y-1">
+        <p className="font-mono font-medium">{item.consecutivo}</p>
+        <p className="text-sm font-medium">
+          {item.direccion}
+          {item.barrio ? ` · ${item.barrio}` : ''}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {item.comuna ?? 'Sin comuna'} · {item.capturado_por_nombre ?? '—'}
+        </p>
+        <p className="text-xs text-muted-foreground">{formatearFecha(item.capturado_en)}</p>
+      </div>
+      <Button size="sm" className="mt-3 w-full sm:w-auto" onClick={onAbrir}>
+        Revisar
+      </Button>
+    </li>
+  );
+}
+
+function TarjetaRevisionHistorial({
+  item,
+  onAbrir,
+}: {
+  item: ItemColaRevision;
+  onAbrir: () => void;
+}) {
+  return (
+    <li className="px-4 py-3 text-muted-foreground">
+      <div className="space-y-1">
+        <p className="font-mono font-medium text-foreground">{item.consecutivo}</p>
+        <p className="text-sm">
+          {item.direccion}
+          {item.barrio ? ` · ${item.barrio}` : ''}
+        </p>
+        <div className="pt-1">
+          {item.habitabilidad_final ? (
+            <HabitabilidadBadge
+              color={item.habitabilidad_final}
+              etiqueta={ETIQUETA_HABITABILIDAD[item.habitabilidad_final]}
+            />
+          ) : (
+            '—'
+          )}
+        </div>
+        <p className="text-xs">
+          {item.firmado_por_nombre ?? '—'} ·{' '}
+          {formatearFecha(item.firmado_en ?? item.capturado_en)}
+        </p>
+      </div>
+      <Button size="sm" variant="outline" className="mt-3 w-full sm:w-auto" onClick={onAbrir}>
+        Ver dictamen
+      </Button>
+    </li>
+  );
+}
+
 function DetalleRevision({
   item,
   editable,
@@ -265,7 +329,7 @@ function DetalleRevision({
 
               {danos.length > 0 && (
                 <div className="overflow-x-auto rounded-md border">
-                  <Table>
+                  <Table className="min-w-[480px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Elemento</TableHead>
@@ -556,8 +620,17 @@ export function ReviewPage() {
                 <div className="border-b px-4 py-2 text-sm font-medium">
                   Pendientes de firma ({pendientes.length})
                 </div>
-                <div className="overflow-x-auto">
-                  <Table>
+                <ul className="divide-y md:hidden">
+                  {pendientes.map((item) => (
+                    <TarjetaRevisionPendiente
+                      key={item.formulario_uuid}
+                      item={item}
+                      onAbrir={() => setAbierto(item)}
+                    />
+                  ))}
+                </ul>
+                <div className="hidden overflow-x-auto md:block">
+                  <Table className="min-w-[720px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Radicado</TableHead>
@@ -607,8 +680,17 @@ export function ReviewPage() {
                 <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium text-muted-foreground">
                   Historial de dictámenes ({historial.length})
                 </div>
-                <div className="overflow-x-auto">
-                  <Table>
+                <ul className="divide-y md:hidden">
+                  {historial.map((item) => (
+                    <TarjetaRevisionHistorial
+                      key={item.formulario_uuid}
+                      item={item}
+                      onAbrir={() => setAbierto(item)}
+                    />
+                  ))}
+                </ul>
+                <div className="hidden overflow-x-auto md:block">
+                  <Table className="min-w-[720px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Radicado</TableHead>

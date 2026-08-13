@@ -33,6 +33,44 @@ function etiquetaNivel(nivel: string) {
   return nivel === 'ingeniero_a' ? 'A' : nivel === 'ingeniero_b' ? 'B' : nivel;
 }
 
+function TarjetaCoberturaComuna({
+  comuna,
+  nuevos,
+  por_asignar,
+  en_proceso,
+  cerrados,
+}: {
+  comuna: string;
+  nuevos: number;
+  por_asignar: number;
+  en_proceso: number;
+  cerrados: number;
+}) {
+  return (
+    <li className="px-4 py-3">
+      <p className="font-medium">{comuna}</p>
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">Nuevos</dt>
+          <dd className="font-medium tabular-nums">{nuevos}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">Por asignar</dt>
+          <dd className="font-medium tabular-nums">{por_asignar}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">En proceso</dt>
+          <dd className="font-medium tabular-nums">{en_proceso}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">Cerrados</dt>
+          <dd className="font-medium tabular-nums">{cerrados}</dd>
+        </div>
+      </dl>
+    </li>
+  );
+}
+
 export function DashboardPage() {
   const [cobertura, setCobertura] = useState<CoberturaTableroResponse | null>(null);
   const [vencimientos, setVencimientos] = useState<VencimientosTableroResponse['asignaciones']>([]);
@@ -143,36 +181,43 @@ export function DashboardPage() {
               <CardTitle className="text-base">Cobertura por comuna</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Comuna</TableHead>
-                    <TableHead className="text-right">Nuevos</TableHead>
-                    <TableHead className="text-right">Por asignar</TableHead>
-                    <TableHead className="text-right">En proceso</TableHead>
-                    <TableHead className="text-right">Cerrados</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cobertura.por_comuna.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        Sin reportes todavía
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    cobertura.por_comuna.map((c) => (
-                      <TableRow key={c.comuna}>
-                        <TableCell className="font-medium">{c.comuna}</TableCell>
-                        <TableCell className="text-right">{c.nuevos}</TableCell>
-                        <TableCell className="text-right">{c.por_asignar}</TableCell>
-                        <TableCell className="text-right">{c.en_proceso}</TableCell>
-                        <TableCell className="text-right">{c.cerrados}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              {cobertura.por_comuna.length === 0 ? (
+                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  Sin reportes todavía
+                </p>
+              ) : (
+                <>
+                  <ul className="divide-y md:hidden">
+                    {cobertura.por_comuna.map((c) => (
+                      <TarjetaCoberturaComuna key={c.comuna} {...c} />
+                    ))}
+                  </ul>
+                  <div className="hidden overflow-x-auto md:block">
+                    <Table className="min-w-[560px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Comuna</TableHead>
+                          <TableHead className="text-right">Nuevos</TableHead>
+                          <TableHead className="text-right">Por asignar</TableHead>
+                          <TableHead className="text-right">En proceso</TableHead>
+                          <TableHead className="text-right">Cerrados</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cobertura.por_comuna.map((c) => (
+                          <TableRow key={c.comuna}>
+                            <TableCell className="font-medium">{c.comuna}</TableCell>
+                            <TableCell className="text-right">{c.nuevos}</TableCell>
+                            <TableCell className="text-right">{c.por_asignar}</TableCell>
+                            <TableCell className="text-right">{c.en_proceso}</TableCell>
+                            <TableCell className="text-right">{c.cerrados}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

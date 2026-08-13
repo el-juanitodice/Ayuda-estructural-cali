@@ -38,6 +38,21 @@ function etiquetaAccion(item: AsignacionCampo) {
   return 'Ver captura';
 }
 
+function BadgesAsignacion({ item }: { item: AsignacionCampo }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      <Badge variant="outline" className="font-normal">
+        {ETIQUETA_FORMULARIO[item.formulario_estado ?? ''] ?? item.estado}
+      </Badge>
+      {item.editable && (
+        <Badge variant="secondary" className="text-xs">
+          editable
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 function TablaAsignaciones({
   items,
   atenuada,
@@ -50,55 +65,90 @@ function TablaAsignaciones({
   if (!items.length) return null;
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Radicado</TableHead>
-          <TableHead>Dirección</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Fecha</TableHead>
-          <TableHead />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      <ul className={`divide-y md:hidden ${atenuada ? 'text-muted-foreground' : ''}`}>
         {items.map((a) => (
-          <TableRow key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`} className={atenuada ? 'text-muted-foreground' : undefined}>
-            <TableCell className="font-medium">
-              {a.consecutivo}
-              {a.requiere_nivel_a && (
-                <Badge variant="destructive" className="ml-2">
-                  nivel A
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell>
-              {a.direccion}
-              {a.barrio ? ` · ${a.barrio}` : ''}
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-wrap items-center gap-1">
-                <Badge variant="outline" className="font-normal">
-                  {ETIQUETA_FORMULARIO[a.formulario_estado ?? ''] ?? a.estado}
-                </Badge>
-                {a.editable && (
-                  <Badge variant="secondary" className="text-xs">
-                    editable
-                  </Badge>
-                )}
+          <li key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`} className="px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{a.consecutivo}</span>
+                  {a.requiere_nivel_a && (
+                    <Badge variant="destructive" className="text-xs">
+                      nivel A
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {a.direccion}
+                  {a.barrio ? ` · ${a.barrio}` : ''}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatearFecha(a.firmado_en ?? a.capturado_en ?? a.vence_en)}
+                </p>
               </div>
-            </TableCell>
-            <TableCell className="whitespace-nowrap text-xs">
-              {formatearFecha(a.firmado_en ?? a.capturado_en ?? a.vence_en)}
-            </TableCell>
-            <TableCell className="text-right">
-              <Button size="sm" variant={a.editable ? 'default' : 'outline'} onClick={() => onAbrir(a)}>
+              <Button
+                size="sm"
+                variant={a.editable ? 'default' : 'outline'}
+                className="shrink-0"
+                onClick={() => onAbrir(a)}
+              >
                 {etiquetaAccion(a)}
               </Button>
-            </TableCell>
-          </TableRow>
+            </div>
+            <div className="mt-2">
+              <BadgesAsignacion item={a} />
+            </div>
+          </li>
         ))}
-      </TableBody>
-    </Table>
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Radicado</TableHead>
+              <TableHead>Dirección</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((a) => (
+              <TableRow
+                key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`}
+                className={atenuada ? 'text-muted-foreground' : undefined}
+              >
+                <TableCell className="font-medium">
+                  {a.consecutivo}
+                  {a.requiere_nivel_a && (
+                    <Badge variant="destructive" className="ml-2">
+                      nivel A
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {a.direccion}
+                  {a.barrio ? ` · ${a.barrio}` : ''}
+                </TableCell>
+                <TableCell>
+                  <BadgesAsignacion item={a} />
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-xs">
+                  {formatearFecha(a.firmado_en ?? a.capturado_en ?? a.vence_en)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant={a.editable ? 'default' : 'outline'} onClick={() => onAbrir(a)}>
+                    {etiquetaAccion(a)}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 
