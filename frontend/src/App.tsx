@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { AuthAwareLayout } from '@/components/layout/AuthAwareLayout';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { ConsultReportProvider } from '@/contexts/ConsultReportContext';
 import { routes } from '@/constants/routes';
@@ -31,7 +31,7 @@ export default function App() {
   return (
     <ConsultReportProvider>
       <Routes>
-        <Route element={<PublicLayout />}>
+        <Route element={<AuthAwareLayout />}>
           <Route index element={<MapPage />} />
           <Route path="reportar" element={<ReportPage />} />
           <Route path="estado" element={<StatusPage />} />

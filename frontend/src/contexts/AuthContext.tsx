@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { get } from '@/lib/api';
-import { clearAccessToken, getAccessToken, setAccessToken } from '@/lib/token';
+import { clearAccessToken, getAccessToken, onAccessTokenCleared, setAccessToken } from '@/lib/token';
 import type { Usuario } from '@/types/auth';
 
 interface AuthContextValue {
@@ -45,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refrescar();
   }, [refrescar]);
+
+  useEffect(() => onAccessTokenCleared(() => setUsuario(null)), []);
 
   const entrar = useCallback((u: Usuario, token: string) => {
     setAccessToken(token);

@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { routes } from '@/constants/routes';
 import { post } from '@/lib/api';
+import { destinoPanel } from '@/lib/auth-routing';
 import type { Usuario } from '@/types/auth';
 
 interface LoginForm {
@@ -20,12 +20,7 @@ interface LoginPageProps {
 }
 
 function destinoTrasLogin(usuario: Usuario): string {
-  if (usuario.rol === 'admin') return routes.admin;
-  if (usuario.rol === 'moderador') return routes.moderacion;
-  if (usuario.rol === 'coordinador') return routes.tablero;
-  if (usuario.rol === 'ingeniero_a') return routes.revision;
-  if (usuario.rol === 'ingeniero_b') return routes.campo;
-  return routes.home;
+  return destinoPanel(usuario);
 }
 
 export function LoginPage({ redirectTo }: LoginPageProps) {

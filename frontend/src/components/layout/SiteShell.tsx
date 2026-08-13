@@ -242,7 +242,8 @@ function SidebarPanel({ onAfterAction, className }: { onAfterAction?: () => void
 
 export function SiteHeader() {
   const [abierto, setAbierto] = useState(false);
-  const items = usePublicNavItems(() => setAbierto(false));
+  const cerrar = () => setAbierto(false);
+  const items = usePublicNavItems(cerrar);
 
   return (
     <header className="site-header sticky top-0 z-40 shrink-0 border-b bg-primary text-primary-foreground print:hidden">
@@ -290,7 +291,7 @@ export function SiteHeader() {
                   <Link
                     to={routes.home}
                     className="flex items-center gap-2 font-semibold"
-                    onClick={() => setAbierto(false)}
+                    onClick={cerrar}
                   >
                     <HardHat className="size-5 shrink-0" />
                     <span>Inspección Cali</span>
@@ -298,14 +299,14 @@ export function SiteHeader() {
                 </div>
 
                 <div className="p-3">
-                  <SidebarNav items={items} onNavigate={() => setAbierto(false)} />
+                  <SidebarNav items={items} onNavigate={cerrar} />
                 </div>
 
                 <div className="mt-auto border-t border-white/10 p-4">
                   <Button
                     className="w-full gap-2 bg-white text-primary hover:bg-white/90"
                     asChild
-                    onClick={() => setAbierto(false)}
+                    onClick={cerrar}
                   >
                     <Link to={routes.ingreso}>
                       <LogIn className="size-4" />
