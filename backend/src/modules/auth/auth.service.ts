@@ -15,6 +15,7 @@ import { Usuario } from '../../database/entities/usuario.entity';
 import type { DefinirClaveDto, LoginDto, RecuperarClaveDto, ReautenticarDto } from './dto/auth.dto';
 import type { JwtPayload } from './interfaces/usuario-jwt.interface';
 import { TicketFirmaService } from './ticket-firma.service';
+import { CorreoService } from '../correo/correo.service';
 
 const OPCIONES_ARGON = {
   type: argon2.argon2id,
@@ -33,6 +34,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly ticketFirma: TicketFirmaService,
+    private readonly correo: CorreoService,
   ) {}
 
   async login({ email, clave }: LoginDto) {
@@ -106,8 +108,7 @@ export class AuthService {
     });
 
     if (usuario) {
-      await this.crearTokenAcceso(usuario, PropositoToken.RECUPERAR_CLAVE);
-      // TODO: integrar módulo de correo (Resend) como en api legacy
+      await this.emitirEnlaceClave(usuario, PropositoToken.RECUPERAR_CLAVE);
     }
 
     return {
@@ -156,6 +157,17 @@ export class AuthService {
     }
 
     return this.ticketFirma.emitir(usuario.uuid);
+  }
+
+  async emitirEnlaceClave(usuario: Usuario, proposito: PropositoToken): Promise<string> {
+    const token = await this.crearTokenAcceso(usuario, proposito);
+    await this.correo.enviarEnlaceClave({
+      email: usuario.email,
+      nombre: usuario.nombre,
+      token,
+      proposito,
+    });
+    return token;
   }
 
   async crearTokenAcceso(usuario: Usuario, proposito: PropositoToken) {

@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PropositoToken, RolUsuario } from '../../common/enums/dominio.enum';
 import { Usuario } from '../../database/entities/usuario.entity';
 import { AuthService } from '../auth/auth.service';
+import { CorreoService } from '../correo/correo.service';
 import type { CrearUsuarioDto } from './dto/admin.dto';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class AdminService {
     private readonly usuariosRepo: Repository<Usuario>,
     private readonly authService: AuthService,
     private readonly config: ConfigService,
+    private readonly correo: CorreoService,
   ) {}
 
   async listarUsuarios() {
@@ -76,11 +78,9 @@ export class AdminService {
 
     await this.usuariosRepo.save(usuario);
 
-    const token = await this.authService.crearTokenAcceso(usuario, PropositoToken.ALTA_CLAVE);
+    const token = await this.authService.emitirEnlaceClave(usuario, PropositoToken.ALTA_CLAVE);
 
     const esDev = this.config.get<string>('app.entorno', 'development') !== 'production';
-    const frontendBase = this.config.get<string>('app.frontendUrl', 'http://localhost:5173');
-    const enlaceAlta = `${frontendBase}/definir-clave?token=${token}`;
 
     return {
       usuario: {
@@ -91,7 +91,7 @@ export class AdminService {
         rol: usuario.rol,
       },
       mensaje: 'Cuenta creada. Se envió el enlace de alta al correo.',
-      ...(esDev ? { enlace_alta: enlaceAlta } : {}),
+      ...(esDev ? { enlace_alta: this.correo.construirEnlace(token, PropositoToken.ALTA_CLAVE) } : {}),
     };
   }
 }

@@ -39,4 +39,8 @@ export default () => ({
     maxBytesFull: parseInt(process.env.MAX_BYTES_FOTO_FULL ?? String(4 * 1024 * 1024), 10),
     maxBytesThumb: parseInt(process.env.MAX_BYTES_FOTO_THUMB ?? String(512 * 1024), 10),
   },
+  correo: {
+    resendApiKey: process.env.RESEND_API_KEY,
+    remitente: process.env.CORREO_REMITENTE ?? 'no-responder@ejemplo.co',
+  },
 });

@@ -7,6 +7,7 @@ import { validateEnv } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CorreoModule } from './modules/correo/correo.module';
 import { ModeracionModule } from './modules/moderacion/moderacion.module';
 import { TableroModule } from './modules/tablero/tablero.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
@@ -32,6 +33,7 @@ import { AisModule } from './shared/ais/ais.module';
     DatabaseModule,
     StorageModule,
     AisModule,
+    CorreoModule,
     SaludModule,
     AuthModule,
     AdminModule,
