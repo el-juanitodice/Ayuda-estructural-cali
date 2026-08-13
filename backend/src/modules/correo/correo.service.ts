@@ -1,16 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { PropositoToken } from '../../common/enums/dominio.enum';
 
 @Injectable()
-export class CorreoService {
+export class CorreoService implements OnModuleInit {
   private readonly logger = new Logger(CorreoService.name);
   private readonly resend: Resend | null;
+  private readonly remitente: string;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = this.config.get<string>('correo.resendApiKey');
+    const apiKey = this.config.get<string>('correo.resendApiKey')?.trim();
+    this.remitente = this.config.get<string>('correo.remitente', 'no-responder@ejemplo.co');
     this.resend = apiKey ? new Resend(apiKey) : null;
+  }
+
+  onModuleInit() {
+    if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY ausente: los enlaces de alta/recuperación solo se loguean');
+      return;
+    }
+    this.logger.log(`Correo Resend activo (remitente: ${this.remitente})`);
   }
 
   estaConfigurado(): boolean {
