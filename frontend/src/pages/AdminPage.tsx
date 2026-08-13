@@ -2,15 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateUserDialog } from '@/components/common/CreateUserDialog';
+import { DeleteUserDialog } from '@/components/common/DeleteUserDialog';
+import { EditUserDialog } from '@/components/common/EditUserDialog';
 import { UsersList } from '@/components/common/UsersList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import { get } from '@/lib/api';
-import type { CrearUsuarioResponse, ListarUsuariosResponse } from '@/types/admin';
+import type {
+  ActualizarUsuarioResponse,
+  CrearUsuarioResponse,
+  DesactivarUsuarioResponse,
+  ListarUsuariosResponse,
+  UsuarioAdmin,
+} from '@/types/admin';
 
 export function AdminPage() {
+  const { usuario: sesion } = useAuth();
   const [usuarios, setUsuarios] = useState<ListarUsuariosResponse['usuarios']>([]);
-  const [dialogAbierto, setDialogAbierto] = useState(false);
+  const [dialogCrearAbierto, setDialogCrearAbierto] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState<UsuarioAdmin | null>(null);
+  const [usuarioEliminando, setUsuarioEliminando] = useState<UsuarioAdmin | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
@@ -41,6 +53,16 @@ export function AdminPage() {
     void cargar();
   };
 
+  const onActualizado = (respuesta: ActualizarUsuarioResponse) => {
+    toast.success('Usuario actualizado', { description: respuesta.mensaje });
+    void cargar();
+  };
+
+  const onEliminado = (respuesta: DesactivarUsuarioResponse) => {
+    toast.success('Cuenta desactivada', { description: respuesta.mensaje });
+    void cargar();
+  };
+
   return (
     <div className="w-full space-y-3">
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
@@ -49,9 +71,9 @@ export function AdminPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b px-4 py-3">
           <div className="min-w-0">
             <CardTitle className="text-base">Usuarios ({usuarios.length})</CardTitle>
-            <p className="text-xs text-muted-foreground">Cuentas del personal</p>
+            <p className="text-xs text-muted-foreground">Cuentas del personal — solo administradores</p>
           </div>
-          <Button size="sm" className="shrink-0" onClick={() => setDialogAbierto(true)}>
+          <Button size="sm" className="shrink-0" onClick={() => setDialogCrearAbierto(true)}>
             <UserPlus className="size-4" />
             Nueva cuenta
           </Button>
@@ -60,12 +82,39 @@ export function AdminPage() {
           {cargando ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">Cargando usuarios…</p>
           ) : (
-            <UsersList usuarios={usuarios} />
+            <UsersList
+              usuarios={usuarios}
+              usuarioActualUuid={sesion?.id}
+              onEditar={setUsuarioEditando}
+              onEliminar={setUsuarioEliminando}
+            />
           )}
         </CardContent>
       </Card>
 
-      <CreateUserDialog open={dialogAbierto} onOpenChange={setDialogAbierto} onCreado={onCreado} />
+      <CreateUserDialog
+        open={dialogCrearAbierto}
+        onOpenChange={setDialogCrearAbierto}
+        onCreado={onCreado}
+      />
+
+      <EditUserDialog
+        usuario={usuarioEditando}
+        open={!!usuarioEditando}
+        onOpenChange={(open) => {
+          if (!open) setUsuarioEditando(null);
+        }}
+        onActualizado={onActualizado}
+      />
+
+      <DeleteUserDialog
+        usuario={usuarioEliminando}
+        open={!!usuarioEliminando}
+        onOpenChange={(open) => {
+          if (!open) setUsuarioEliminando(null);
+        }}
+        onEliminado={onEliminado}
+      />
     </div>
   );
 }
