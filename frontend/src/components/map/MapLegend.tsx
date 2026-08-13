@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import { ADVERTENCIA_MAPA_DEFAULT, COLORES_MAPA, LEYENDA_ITEMS } from '@/constants/map';
 import type { MapaLeyenda } from '@/types/map';
 
@@ -6,6 +7,8 @@ interface MapLegendProps {
 }
 
 export function MapLegend({ leyenda }: MapLegendProps) {
+  const advertencia = leyenda?.advertencia ?? ADVERTENCIA_MAPA_DEFAULT;
+
   return (
     <div
       className="mt-2 rounded-lg border-2 border-primary bg-card px-3 py-2 text-sm"
@@ -24,8 +27,9 @@ export function MapLegend({ leyenda }: MapLegendProps) {
           </span>
         ))}
       </div>
-      <p className="mb-0 mt-1.5 font-semibold">
-        ⚠️ {leyenda?.advertencia ?? ADVERTENCIA_MAPA_DEFAULT}
+      <p className="mb-0 mt-1.5 flex items-start gap-1.5 font-semibold">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+        <span>{advertencia}</span>
       </p>
     </div>
   );
