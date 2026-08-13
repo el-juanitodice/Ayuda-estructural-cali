@@ -101,6 +101,12 @@ export function ReportPage() {
           uuid: e.cuerpo.uuid ?? '',
           consecutivo: e.cuerpo.consecutivo ?? '',
         };
+        if (yaReconocioEmergencia) {
+          const fotosEncoladas = await encolarFotosSeleccionadas(guardado.uuid);
+          setModalEmergencia(false);
+          notificarReporteRecibido(guardado.consecutivo, fotosEncoladas);
+          return;
+        }
         setRadicadoEmergencia(guardado);
         setReporteGuardadoEnEmergencia(true);
         setModalEmergencia(true);

@@ -17,10 +17,10 @@ interface Emergency123DialogProps {
 
 export function Emergency123Dialog({ open, onContinuar, reporteGuardado }: Emergency123DialogProps) {
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={() => undefined}>
       <DialogContent
         showClose={false}
-        className="border-destructive sm:max-w-md"
+        className="sm:max-w-md"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -31,7 +31,7 @@ export function Emergency123Dialog({ open, onContinuar, reporteGuardado }: Emerg
           <DialogDescription asChild>
             <div className="space-y-3 pt-2 text-left text-foreground">
               {reporteGuardado && (
-                <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                <p className="rounded-md bg-destructive/10 p-3 text-sm">
                   Tu reporte quedó guardado con radicado{' '}
                   <strong className="font-mono">{reporteGuardado.consecutivo}</strong>. Aun así debes
                   llamar al 123 si hay riesgo inmediato.
