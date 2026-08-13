@@ -49,6 +49,21 @@
     z-index: 0;
   }
 
+  .report-location-marker-wrap {
+    background: transparent;
+    border: none;
+  }
+
+  .report-location-marker {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    border: 3px solid white;
+    background: hsl(var(--primary));
+    box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+  }
+
   /* Aviso imprimible (carta) */
   .aviso-carta {
     @apply mx-auto box-border max-w-[8.5in] border-[6px] border-neutral-900 bg-white px-[0.7in] py-[0.6in];

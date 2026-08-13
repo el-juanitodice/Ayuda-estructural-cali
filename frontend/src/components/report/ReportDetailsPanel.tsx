@@ -1,11 +1,11 @@
-import { AlertTriangle, MapPin } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { USOS } from '@shared/ais.js';
 import {
   fieldClass,
-  RELACIONES,
   TIPOS_EDIFICACION,
 } from '@/components/report/report-form.constants';
 import type { ReporteForm } from '@/components/report/report-form.types';
+import { ReportLocationPicker } from '@/components/report/ReportLocationPicker';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,92 +19,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatearPrecisionGps } from '@/lib/reporte';
+import type { UbicacionReporte } from '@/lib/reporte';
+import { MAX_DIRECCION_REPORTE } from '@/lib/geocoding';
 import type { UseFormReturn } from 'react-hook-form';
-
-interface GpsCoords {
-  lat: number;
-  lng: number;
-  precision: number;
-}
 
 interface ReportDetailsPanelProps {
   form: UseFormReturn<ReporteForm>;
-  gps: GpsCoords | null;
-  onPedirGps: () => void;
+  ubicacion: UbicacionReporte | null;
+  onUbicacionChange: (ubicacion: UbicacionReporte) => void;
+  onUbicacionError?: (mensaje: string | null) => void;
   error: string | null;
   enviando: boolean;
 }
 
-export function ReportDetailsPanel({ form, gps, onPedirGps, error, enviando }: ReportDetailsPanelProps) {
+export function ReportDetailsPanel({
+  form,
+  ubicacion,
+  onUbicacionChange,
+  onUbicacionError,
+  error,
+  enviando,
+}: ReportDetailsPanelProps) {
   return (
-    <Card className="flex min-h-0 flex-col lg:h-full">
+    <Card className="flex h-full min-h-0 flex-col">
       <CardHeader className="border-b pb-3">
-        <CardTitle className="text-base">Datos de contacto e inmueble</CardTitle>
+        <CardTitle className="text-base">Datos del inmueble</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-4 pt-4">
-        <section className="space-y-3">
-          <p className="text-xs font-medium text-muted-foreground">Tus datos — para que te llamen</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="reportante_nombre"
-              rules={{ required: true }}
-              render={({ field }) => (
-                <FormItem className={fieldClass}>
-                  <FormLabel className="text-xs">Nombre</FormLabel>
-                  <FormControl>
-                    <Input required minLength={3} className="h-9" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="reportante_telefono"
-              rules={{ required: true }}
-              render={({ field }) => (
-                <FormItem className={fieldClass}>
-                  <FormLabel className="text-xs">Teléfono</FormLabel>
-                  <FormControl>
-                    <Input type="tel" required minLength={7} className="h-9" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={form.control}
-            name="reportante_relacion"
-            render={({ field }) => (
-              <FormItem className={fieldClass}>
-                <FormLabel className="text-xs">Relación con el predio</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecciona relación" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {RELACIONES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-        </section>
-
-        <section className="space-y-3 border-t pt-4">
+        <section className="min-h-0 flex-1 space-y-3">
           <p className="text-xs font-medium text-muted-foreground">
-            Detalles del inmueble — dirección y GPS obligatorios
+            Detalles del inmueble — dirección y ubicación obligatorias
           </p>
 
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="direccion"
@@ -116,7 +64,8 @@ export function ReportDetailsPanel({ form, gps, onPedirGps, error, enviando }: R
                     <Input
                       required
                       minLength={5}
-                      placeholder="Carrera 23 # 15-19"
+                      maxLength={MAX_DIRECCION_REPORTE}
+                      placeholder="Carrera 23 # 15-19, San Fernando, Cali…"
                       className="h-9"
                       {...field}
                     />
@@ -124,25 +73,28 @@ export function ReportDetailsPanel({ form, gps, onPedirGps, error, enviando }: R
                 </FormItem>
               )}
             />
-            <div className="flex flex-col justify-end">
-              <Button type="button" variant="secondary" size="sm" className="h-9" onClick={onPedirGps}>
-                <MapPin className="size-4" />
-                {gps ? formatearPrecisionGps(gps.precision) : 'GPS'}
-              </Button>
-            </div>
+            <FormField
+              control={form.control}
+              name="barrio"
+              render={({ field }) => (
+                <FormItem className={fieldClass}>
+                  <FormLabel className="text-xs">Barrio</FormLabel>
+                  <FormControl>
+                    <Input className="h-9" placeholder="San Fernando" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
-          <FormField
-            control={form.control}
-            name="barrio"
-            render={({ field }) => (
-              <FormItem className={fieldClass}>
-                <FormLabel className="text-xs">Barrio</FormLabel>
-                <FormControl>
-                  <Input className="h-9" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
+          <ReportLocationPicker
+            ubicacion={ubicacion}
+            onUbicacionChange={onUbicacionChange}
+            onDireccionDetectada={({ direccion, barrio }) => {
+              form.setValue('direccion', direccion, { shouldDirty: true, shouldValidate: true });
+              form.setValue('barrio', barrio ?? '', { shouldDirty: true });
+            }}
+            onError={onUbicacionError}
           />
 
           <div className="grid gap-2 sm:grid-cols-2">
@@ -247,7 +199,7 @@ export function ReportDetailsPanel({ form, gps, onPedirGps, error, enviando }: R
           </div>
         </section>
 
-        <div className="mt-auto space-y-3 border-t pt-4">
+        <div className="mt-auto shrink-0 space-y-3 border-t pt-4">
           {error && (
             <Alert variant="destructive">
               <AlertTriangle className="size-4" />

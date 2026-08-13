@@ -10,14 +10,8 @@ import { valoresInicialesReporte, type ReporteForm } from '@/components/report/r
 import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { Form } from '@/components/ui/form';
 import { encolarFotosReporte } from '@/lib/fotos/cola-subida';
-import { construirPayloadReporte, gpsEnAreaCali } from '@/lib/reporte';
+import { construirPayloadReporte, gpsEnAreaCali, type UbicacionReporte } from '@/lib/reporte';
 import { ErrorApi, post } from '@/lib/api';
-
-interface GpsCoords {
-  lat: number;
-  lng: number;
-  precision: number;
-}
 
 interface CrearReporteResponse {
   uuid: string;
@@ -26,7 +20,7 @@ interface CrearReporteResponse {
 
 export function ReportPage() {
   const { abrirConsulta } = useConsultReport();
-  const [gps, setGps] = useState<GpsCoords | null>(null);
+  const [ubicacion, setUbicacion] = useState<UbicacionReporte | null>(null);
   const [fotos, setFotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -55,7 +49,7 @@ export function ReportPage() {
         duration: 12000,
       });
       form.reset(valoresInicialesReporte);
-      setGps(null);
+      setUbicacion(null);
       setFotos([]);
       setRadicadoEmergencia(null);
       setReporteGuardadoEnEmergencia(false);
@@ -76,49 +70,15 @@ export function ReportPage() {
     });
   }, [valores.descripcion, valores.personasAtrapadas, valores.colapsoEnCurso]);
 
-  const pedirGps = () => {
-    setError(null);
-    if (!window.isSecureContext) {
-      setError(
-        'El GPS requiere conexión segura (HTTPS). Abre la app con https:// en lugar de http://.',
-      );
-      return;
-    }
-    if (!navigator.geolocation) {
-      setError('Tu navegador no soporta geolocalización.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (p) =>
-        setGps({
-          lat: p.coords.latitude,
-          lng: p.coords.longitude,
-          precision: Math.round(p.coords.accuracy),
-        }),
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setError('Permiso de ubicación denegado. Actívalo en los ajustes del navegador.');
-          return;
-        }
-        if (err.code === err.TIMEOUT) {
-          setError('Tiempo agotado. Activa GPS de alta precisión e intenta de nuevo.');
-          return;
-        }
-        setError('No pudimos obtener tu ubicación. Activa el GPS e intenta de nuevo.');
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  };
-
   const enviarReporte = async (datos: ReporteForm, yaReconocioEmergencia = false) => {
     setError(null);
-    if (!gps) {
-      setError('Necesitamos la ubicación del predio. Toca el botón GPS.');
+    if (!ubicacion) {
+      setError('Marca la ubicación del predio en el mapa.');
       return;
     }
-    if (!gpsEnAreaCali(gps.lat, gps.lng)) {
+    if (!gpsEnAreaCali(ubicacion.lat, ubicacion.lng)) {
       setError(
-        'La ubicación GPS está fuera del área de Cali. Activa la ubicación en el predio o acércate a Cali para reportar.',
+        'La ubicación está fuera del área de Cali. Coloca el marcador sobre el predio dentro de Cali.',
       );
       return;
     }
@@ -131,7 +91,7 @@ export function ReportPage() {
 
     setEnviando(true);
     try {
-      const r = await post<CrearReporteResponse>('/reportes', construirPayloadReporte(datos, gps));
+      const r = await post<CrearReporteResponse>('/reportes', construirPayloadReporte(datos, ubicacion));
       const fotosEncoladas = await encolarFotosSeleccionadas(r.uuid);
       setModalEmergencia(false);
       notificarReporteRecibido(r.consecutivo, fotosEncoladas);
@@ -174,7 +134,7 @@ export function ReportPage() {
         <form
           onSubmit={form.handleSubmit((datos) => enviarReporte(datos))}
           noValidate
-          className="grid min-h-0 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:min-h-[calc(100svh-12rem)]"
+          className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6"
         >
           <ReportSituationPanel
             form={form}
@@ -182,7 +142,14 @@ export function ReportPage() {
             onFotosChange={setFotos}
             enviando={enviando}
           />
-          <ReportDetailsPanel form={form} gps={gps} onPedirGps={pedirGps} error={error} enviando={enviando} />
+          <ReportDetailsPanel
+            form={form}
+            ubicacion={ubicacion}
+            onUbicacionChange={setUbicacion}
+            onUbicacionError={setError}
+            error={error}
+            enviando={enviando}
+          />
         </form>
       </Form>
 

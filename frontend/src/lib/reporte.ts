@@ -15,6 +15,23 @@ export function gpsEnAreaCali(lat: number, lng: number): boolean {
   );
 }
 
+/** Precisión asumida cuando el usuario ubica el predio manualmente en el mapa. */
+export const PRECISION_UBICACION_MANUAL_M = 100;
+
+export interface UbicacionReporte {
+  lat: number;
+  lng: number;
+  precision: number;
+  origen: 'gps' | 'manual';
+}
+
+export function describirUbicacionReporte(ubicacion: UbicacionReporte): string {
+  if (ubicacion.origen === 'manual') {
+    return `Manual · ±${PRECISION_UBICACION_MANUAL_M} m`;
+  }
+  return formatearPrecisionGps(ubicacion.precision);
+}
+
 /** Máximo aceptado por el backend (`CrearReporteDto.precision_gps_m`). */
 export const MAX_PRECISION_GPS_M = 10_000;
 
@@ -77,8 +94,13 @@ export function construirPayloadReporte(
     personasAtrapadas: boolean;
     colapsoEnCurso: boolean;
   },
-  gps: { lat: number; lng: number; precision: number },
+  gps: { lat: number; lng: number; precision: number } | UbicacionReporte,
 ): PayloadReporte {
+  const precision =
+    'origen' in gps && gps.origen === 'manual'
+      ? PRECISION_UBICACION_MANUAL_M
+      : gps.precision;
+
   return {
     reportante_nombre: datos.reportante_nombre.trim(),
     reportante_telefono: datos.reportante_telefono.trim(),
@@ -87,7 +109,7 @@ export function construirPayloadReporte(
     barrio: datos.barrio.trim() || null,
     lat: Number(gps.lat),
     lng: Number(gps.lng),
-    precision_gps_m: normalizarPrecisionGps(gps.precision),
+    precision_gps_m: normalizarPrecisionGps(precision),
     tipo_edificacion: datos.tipo_edificacion || null,
     pisos_declarados: enteroPositivo(datos.pisos_declarados),
     unidades_declaradas: enteroPositivo(datos.unidades_declaradas),
