@@ -1,0 +1,48 @@
+MIT License
+
+Copyright (c) 2026 Juan David Montoya y contribuyentes de
+Ayuda Estructural Cali (ayudaestructuralcali.org)
+
+Se concede permiso, libre de cargos, a cualquier persona que obtenga una copia
+de este software y de los archivos de documentación asociados (el "Software"),
+a utilizar el Software sin restricción, incluyendo sin limitación los derechos
+a usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o
+vender copias del Software, y a permitir a las personas a las que se les
+proporcione el Software a hacer lo mismo, sujeto a las siguientes condiciones:
+
+El aviso de copyright anterior y este aviso de permiso se incluirán en todas
+las copias o partes sustanciales del Software.
+
+EL SOFTWARE SE PROPORCIONA "COMO ESTÁ", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+IMPLÍCITA, INCLUYENDO PERO NO LIMITADO A GARANTÍAS DE COMERCIALIZACIÓN,
+IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN NINGÚN CASO LOS
+AUTORES O TITULARES DEL COPYRIGHT SERÁN RESPONSABLES DE NINGUNA RECLAMACIÓN,
+DAÑOS U OTRAS RESPONSABILIDADES, YA SEA EN UNA ACCIÓN DE CONTRATO, AGRAVIO O
+CUALQUIER OTRO MOTIVO, DERIVADAS DE, FUERA DE O EN CONEXIÓN CON EL SOFTWARE O
+SU USO U OTRO TIPO DE ACCIONES EN EL SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+AVISO IMPORTANTE SOBRE EL USO (no modifica la licencia MIT anterior)
+
+Este software es una herramienta de CAPTURA y COORDINACIÓN. No evalúa
+edificaciones ni emite dictámenes por sí mismo.
+
+  1. Todo dictamen de habitabilidad es responsabilidad exclusiva del ingeniero
+     o arquitecto con matrícula profesional vigente que lo firma, conforme a la
+     Ley 400 de 1997, el Reglamento NSR-10 y las normas de ética profesional
+     aplicables en Colombia.
+
+  2. La clasificación de habitabilidad sigue el Formulario Único de Inspección
+     de Edificaciones Después de un Sismo de la Asociación Colombiana de
+     Ingeniería Sísmica (AIS). El Manual de Campo de la AIS es obra de sus
+     autores; esta licencia no cubre dicho documento ni otorga derechos sobre
+     él. Consulte a la AIS para su uso.
+
+  3. Quien despliegue este software es responsable del tratamiento de los datos
+     personales que recolecte, conforme a la Ley 1581 de 2012 y sus decretos
+     reglamentarios.
+
+  4. Este software NO es un sistema de atención de emergencias. En Colombia,
+     las emergencias con riesgo inmediato para la vida se atienden por la
+     línea 123.

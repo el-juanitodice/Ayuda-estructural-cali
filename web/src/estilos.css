@@ -73,6 +73,15 @@ button.secundario { background: #e9ecef; color: #1a1a1a; margin-left: 6px; }
 
 .pie { text-align: center; font-size: .85rem; color: #555; padding: 16px; }
 
+/* ── Selector de ubicación (reporte ciudadano) ────────────────────── */
+.selector-ubicacion { margin: 10px 0; }
+.mapa-selector {
+  height: 280px; border-radius: 10px; border: 2px solid #1d3557;
+  /* el mapa debe ganarle al gesto de scroll dentro del formulario */
+  touch-action: none;
+}
+.mapa-selector .leaflet-marker-icon { cursor: grab; }
+
 /* ── Captura de campo ─────────────────────────────────────────────── */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 .matriz { overflow-x: auto; }

@@ -11,8 +11,9 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import htm from 'htm';
 import { requiereLlamar123, USOS } from '../../../shared/ais.js';
-import { post, ErrorApi } from '../api.js';
 import { encolarFoto, suscribirse } from '../fotos/cola-subida.js';
+import { enviarOEncolar } from '../fotos/cola-reportes.js';
+import { SelectorUbicacion } from './selector-ubicacion.js';
 
 const html = htm.bind(h);
 
@@ -57,47 +58,80 @@ export function PaginaReportar() {
       colapsoEnCurso: f.colapsoEnCurso,
     });
 
+  const [gpsFallo, setGpsFallo] = useState(false);
+
   const pedirGps = () => {
+    setError(null);
+    if (!navigator.geolocation) return setGpsFallo(true);
     navigator.geolocation.getCurrentPosition(
-      (p) => setGps({ lat: p.coords.latitude, lng: p.coords.longitude, precision: Math.round(p.coords.accuracy) }),
-      () => setError('No pudimos obtener tu ubicación. Activa el GPS e intenta de nuevo.'),
+      (p) => {
+        setGpsFallo(false);
+        setGps({ lat: p.coords.latitude, lng: p.coords.longitude,
+                 precision: Math.round(p.coords.accuracy) });
+      },
+      () => {
+        // Dentro de un edificio de concreto el GPS falla seguido. No se
+        // puede dejar a la persona sin reportar por eso.
+        setGpsFallo(true);
+        setError('No pudimos obtener tu ubicación automáticamente. '
+                 + 'Marca abajo el punto aproximado en el mapa.');
+      },
       { enableHighAccuracy: true, timeout: 15000 },
     );
   };
 
   const enviar = async (yaReconocioEmergencia = false) => {
     setError(null);
-    if (!gps) return setError('Necesitamos la ubicación del predio. Toca "Usar mi ubicación".');
+    if (!gps) {
+      return setError('Necesitamos la ubicación del predio: toca «Usar mi ubicación» '
+        + 'o marca el punto en el mapa arrastrando el marcador.');
+    }
     if (esEmergencia() && !yaReconocioEmergencia) return setFase('emergencia');
 
     setFase('enviando');
-    try {
-      const r = await post('/reportes', {
-        reportante_nombre: f.reportante_nombre,
-        reportante_telefono: f.reportante_telefono,
-        reportante_relacion: f.reportante_relacion,
-        direccion: f.direccion,
-        barrio: f.barrio || null,
-        lat: gps.lat, lng: gps.lng, precision_gps_m: gps.precision,
-        tipo_edificacion: f.tipo_edificacion,
-        pisos_declarados: Number(f.pisos_declarados) || null,
-        unidades_declaradas: Number(f.unidades_declaradas) || null,
-        habitada: f.habitada,
-        uso_declarado: Number(f.uso_declarado),
-        descripcion: f.descripcion || null,
-        banderas: { personasAtrapadas: f.personasAtrapadas, colapsoEnCurso: f.colapsoEnCurso },
-      });
-      terminar(r);
-    } catch (e) {
-      if (e instanceof ErrorApi && e.codigo === 'emergencia_123') {
-        // El servidor también lo detectó. El reporte YA quedó guardado.
-        terminar(e.cuerpo);
-        setFase('emergencia');
-        return;
-      }
-      setFase('formulario');
-      setError(e.message);
+    // Se guarda en el teléfono y se intenta enviar. Si no hay señal, la cola
+    // lo envía sola después: el reporte NUNCA se pierde.
+    const r = await enviarOEncolar({
+      reportante_nombre: f.reportante_nombre,
+      reportante_telefono: f.reportante_telefono,
+      reportante_relacion: f.reportante_relacion,
+      direccion: f.direccion,
+      barrio: f.barrio || null,
+      lat: gps.lat, lng: gps.lng, precision_gps_m: gps.precision,
+      tipo_edificacion: f.tipo_edificacion,
+      pisos_declarados: Number(f.pisos_declarados) || null,
+      unidades_declaradas: Number(f.unidades_declaradas) || null,
+      habitada: f.habitada,
+      uso_declarado: Number(f.uso_declarado),
+      descripcion: f.descripcion || null,
+      banderas: { personasAtrapadas: f.personasAtrapadas, colapsoEnCurso: f.colapsoEnCurso },
+    });
+
+    if (r.enviado) {
+      terminar({ uuid: r.uuid, consecutivo: r.consecutivo });
+      if (r.emergencia) setFase('emergencia');
+      return;
     }
+    if (r.error === 'sin_conexion' || r.error === 'servidor') {
+      // Guardado local: se envía solo cuando vuelva la señal
+      terminar({ uuid: r.uuid, consecutivo: null, pendiente: true });
+      return;
+    }
+    setFase('formulario');
+    setError(mensajeAmable(r.error));
+  };
+
+  // Traduce errores técnicos a algo que una persona asustada pueda accionar
+  const mensajeAmable = (msg = '') => {
+    if (/fuera de|inv[aá]lid|validaci/i.test(msg)) {
+      return 'Revisa los datos: el teléfono debe tener al menos 7 números y '
+        + 'la ubicación debe estar dentro de Cali y alrededores.';
+    }
+    if (/demasiadas/i.test(msg)) {
+      return 'Se enviaron muchos reportes desde esta conexión. Espera unos '
+        + 'minutos e intenta de nuevo.';
+    }
+    return msg || 'No pudimos enviar el reporte. Intenta de nuevo.';
   };
 
   // Con el reporte creado, las fotos van a la cola persistente (suben cuando haya señal)
@@ -125,12 +159,23 @@ export function PaginaReportar() {
           <div class="emergencia compacta">
             <a class="btn-123" href="tel:123">🚨 LLAMA AL 123 AHORA</a>
           </div>`}
-        <h2>Reporte recibido</h2>
-        <p>Tu número de radicado es:</p>
-        <p class="radicado">${radicado.consecutivo}</p>
-        <p>Guárdalo. Con él consultas el estado en la sección
-           <a href="#/estado">Consultar</a>. Un moderador te llamará al teléfono
-           que dejaste para confirmar los datos.</p>
+        ${radicado.pendiente
+          ? html`
+            <h2>Reporte guardado ✅</h2>
+            <div class="aviso-cola">
+              <p><strong>No hay señal en este momento, pero tu reporte NO se perdió:</strong>
+                 quedó guardado en este teléfono y se enviará solo apenas vuelva
+                 la conexión.</p>
+              <p>Puedes cerrar la página. Vuelve a abrirla más tarde con señal
+                 para ver tu número de radicado.</p>
+            </div>`
+          : html`
+            <h2>Reporte recibido</h2>
+            <p>Tu número de radicado es:</p>
+            <p class="radicado">${radicado.consecutivo}</p>
+            <p>Guárdalo. Con él consultas el estado en la sección
+               <a href="#/estado">Consultar</a>. Un moderador te llamará al teléfono
+               que dejaste para confirmar los datos.</p>`}
         ${cola && (cola.pendiente + cola.subiendo) > 0 && html`
           <p class="aviso-cola">📷 Subiendo fotos: ${cola.confirmada} listas,
              ${cola.pendiente + cola.subiendo} en cola.
@@ -172,8 +217,12 @@ export function PaginaReportar() {
 
       <p>
         <button type="button" class="secundario" onClick=${pedirGps}>📍 Usar mi ubicación</button>
-        ${gps && html` <span class="ok">Ubicación lista (±${gps.precision} m)</span>`}
+        ${gps && html` <span class="ok">Ubicación lista${gps.precision ? ` (±${gps.precision} m)` : ' (marcada a mano)'}</span>`}
       </p>
+      ${gpsFallo && html`
+        <p class="nota"><strong>¿El GPS no funciona?</strong> Pasa seguido dentro
+          de edificios de concreto. Marca el punto tú mismo en el mapa:</p>`}
+      <${SelectorUbicacion} gps=${gps} alMover=${setGps} />
 
       <label>Tipo
         <select value=${f.tipo_edificacion} onChange=${campo('tipo_edificacion')}>

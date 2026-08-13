@@ -25,6 +25,9 @@ export default async function rutasReportes(app) {
         required: ['reportante_nombre', 'reportante_telefono', 'direccion', 'lat', 'lng'],
         additionalProperties: false,
         properties: {
+          // UUID generado en el teléfono: permite que la cola offline
+          // reintente sin crear reportes duplicados.
+          uuid: { type: 'string', format: 'uuid' },
           reportante_nombre: { type: 'string', minLength: 3, maxLength: 120 },
           reportante_telefono: { type: 'string', minLength: 7, maxLength: 20, pattern: '^[0-9+\\-\\s]+$' },
           reportante_relacion: { type: ['string', 'null'], maxLength: 40 },
@@ -56,13 +59,28 @@ export default async function rutasReportes(app) {
     // El SERVIDOR decide si es emergencia; nunca confía en el cliente
     const emergencia = requiereLlamar123(b.descripcion || '', banderas);
 
+    // Reintento de la cola offline: el reporte ya entró, no se duplica
+    if (b.uuid) {
+      const [ya] = await sql`
+        SELECT uuid, consecutivo FROM reportes WHERE uuid = ${b.uuid}`;
+      if (ya) {
+        return emergencia
+          ? reply.code(409).send({
+              error: 'emergencia_123',
+              mensaje: 'Esto describe una emergencia. LLAMA AL 123 AHORA. Tu reporte ya está guardado.',
+              uuid: ya.uuid, consecutivo: ya.consecutivo })
+          : reply.code(200).send({ uuid: ya.uuid, consecutivo: ya.consecutivo, ya_existia: true });
+      }
+    }
+
     const [reporte] = await sql`
       INSERT INTO reportes (
-        consecutivo, reportante_nombre, reportante_telefono, reportante_relacion,
+        uuid, consecutivo, reportante_nombre, reportante_telefono, reportante_relacion,
         direccion, barrio, geom, precision_gps_m,
         tipo_edificacion, pisos_declarados, unidades_declaradas, habitada,
         uso_declarado, descripcion, menciona_colapso)
       VALUES (
+        ${b.uuid ?? sql`gen_random_uuid()`},
         siguiente_consecutivo(), ${b.reportante_nombre}, ${b.reportante_telefono},
         ${b.reportante_relacion ?? null}, ${b.direccion}, ${b.barrio ?? null},
         ST_SetSRID(ST_MakePoint(${b.lng}, ${b.lat}), 4326)::geography,
