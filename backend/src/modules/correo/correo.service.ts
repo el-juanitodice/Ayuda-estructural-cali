@@ -40,6 +40,7 @@ export class CorreoService {
       this.logger.warn(
         `RESEND_API_KEY ausente: enlace solo en log (${email}) → ${enlace}`,
       );
+      console.log(`[CORREO WARN] RESEND_API_KEY ausente para ${email}`);
       return;
     }
 
@@ -49,7 +50,8 @@ export class CorreoService {
         : 'Recuperación de contraseña — Inspección post-sísmica Cali';
 
     try {
-      await this.resend.emails.send({
+      console.log(`[CORREO] Enviando email a ${email} con asunto: ${asunto}`);
+      const resultado = await this.resend.emails.send({
         from: this.config.get<string>('correo.remitente', 'no-responder@ejemplo.co'),
         to: email,
         subject: asunto,
@@ -66,8 +68,16 @@ export class CorreoService {
           'Si no esperabas este correo, ignóralo.',
         ].join('\n'),
       });
+      if (resultado.error) {
+        console.log(`[CORREO ERROR] ${email}: ${resultado.error}`);
+        this.logger.error(`Error enviando email a ${email}: ${resultado.error}`);
+      } else {
+        console.log(`[CORREO SUCCESS] Email enviado a ${email}`);
+        this.logger.log(`Email enviado a ${email} (${proposito})`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      console.log(`[CORREO ERROR] Excepción al enviar a ${email}: ${msg}`);
       this.logger.error(`Fallo el envío de correo (${email}): ${msg} — enlace: ${enlace}`);
     }
   }
