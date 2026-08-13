@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Phone, ShieldAlert, Trash2 } from 'lucide-react';
+import { ArrowLeft, Phone, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Badge } from '@/components/ui/badge';
@@ -504,14 +504,15 @@ export function ModerationPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Moderación</h1>
+          <h1 className="text-2xl font-semibold">Moderación</h1>
           <p className="text-sm text-muted-foreground">
             Nuevos arriba; procesados en gris abajo. Valida tras llamar al reportante.
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => void cargarCola()} disabled={cargando}>
+        <Button variant="outline" size="sm" onClick={() => void cargarCola()} disabled={cargando}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
           Actualizar
         </Button>
       </div>
