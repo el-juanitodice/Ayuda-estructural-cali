@@ -6,6 +6,11 @@
 # Dependencias y build
 node_modules/
 web/dist/
+frontend/dist/
+backend/dist/
+backend/uploads/
+backend/package-lock.json
+*.tsbuildinfo
 
 # Sistema
 .DS_Store
