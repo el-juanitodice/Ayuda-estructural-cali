@@ -41,7 +41,8 @@ Los 10 puntos del orden de construcción del BRIEF están **implementados y desp
 
 | Archivo | Contenido |
 |---|---|
-| **[BRIEF.md](BRIEF.md)** | **Empieza aquí.** Restricciones críticas no negociables |
+| [RESUMEN.md](RESUMEN.md) | Resumen ejecutivo: problema, solución, principios, costos |
+| **[BRIEF.md](BRIEF.md)** | **Empieza aquí si vas a programar.** Restricciones no negociables |
 | [ARQUITECTURA.md](ARQUITECTURA.md) | Servicios en Railway, correo, fotos, seguridad, respaldos |
 | [API.md](API.md) | Endpoints |
 | [FLUJOS.md](FLUJOS.md) | Estados del reporte, escalación, recorridos por rol |
@@ -161,5 +162,8 @@ de libre circulación).
 
 ## Licencia
 
-Software de interés público. Uso libre por entidades de gestión del riesgo,
+**MIT** — ver [LICENSE](LICENSE). Uso libre por entidades de gestión del riesgo,
 alcaldías, gremios profesionales y organizaciones de respuesta a emergencias.
+
+El archivo LICENSE incluye un aviso importante: el software captura y coordina,
+pero **el dictamen es responsabilidad del profesional matriculado que firma**.

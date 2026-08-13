@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks';
 import htm from 'htm';
 import { get, post } from './api.js';
 import { iniciarCola, suscribirse } from './fotos/cola-subida.js';
+import { iniciarColaReportes, suscribirseReportes } from './fotos/cola-reportes.js';
 import { PaginaReportar } from './paginas/reportar.js';
 import { PaginaEstado } from './paginas/estado.js';
 import { PaginaMapa } from './paginas/mapa.js';
@@ -32,14 +33,25 @@ function App() {
   const [{ ruta, params }, setRuta] = useState(rutaActual());
   const [usuario, setUsuario] = useState(null);
   const [cola, setCola] = useState(null);
+  const [reportes, setReportes] = useState(null);
 
   useEffect(() => {
     const alCambiar = () => setRuta(rutaActual());
     window.addEventListener('hashchange', alCambiar);
     get('/auth/yo').then((r) => setUsuario(r.usuario)).catch(() => {});
     iniciarCola();
-    return suscribirse(setCola), () => window.removeEventListener('hashchange', alCambiar);
+    iniciarColaReportes();
+    const desFotos = suscribirse(setCola);
+    const desReportes = suscribirseReportes(setReportes);
+    return () => {
+      window.removeEventListener('hashchange', alCambiar);
+      desFotos();
+      desReportes();
+    };
   }, []);
+
+  // Radicados que llegaron mientras la persona no estaba mirando
+  const radicadosNuevos = (reportes?.enviados || []).filter((r) => r.consecutivo);
 
   const salir = async () => {
     await post('/auth/logout').catch(() => {});
@@ -86,7 +98,23 @@ function App() {
           : html`<a href="#/ingreso">Ingresar</a>`}
       </nav>
     </header>
-    <main>${pagina}</main>
+    <main>
+      ${reportes?.pendientes > 0 && html`
+        <div class="aviso-cola">
+          📤 <strong>${reportes.pendientes} reporte(s) esperando señal.</strong>
+          Se envían solos apenas haya conexión. No cierres la app sin necesidad.
+        </div>`}
+      ${ruta === '/' && radicadosNuevos.length > 0 && html`
+        <div class="tarjeta">
+          <h3>Tus reportes enviados desde este teléfono</h3>
+          <ul class="lista-cola">
+            ${radicadosNuevos.map((r) => html`
+              <li><strong>${r.consecutivo}</strong>
+                <small> · consulta su estado en «Consultar»</small></li>`)}
+          </ul>
+        </div>`}
+      ${pagina}
+    </main>
     <footer class="pie">
       <p>🚨 Emergencias con riesgo para la vida: <a href="tel:123"><strong>llama al 123</strong></a>.
          Esta plataforma no atiende emergencias.</p>

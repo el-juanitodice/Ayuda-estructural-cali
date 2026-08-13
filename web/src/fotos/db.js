@@ -31,6 +31,17 @@ db.version(2).stores({
   formularios: 'uuid, reporte_uuid, estado, pendiente',
 });
 
+// v3 — cola de REPORTES ciudadanos (BRIEF §4.1).
+// Antes el reporte exigía conexión: con la antena saturada tras el sismo el
+// ciudadano se quedaba sin poder reportar. Ahora se guarda en el teléfono y
+// se envía solo. `uuid` es del cliente → el servidor lo usa para no duplicar.
+db.version(3).stores({
+  cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
+  asignaciones: 'reporte_uuid',
+  formularios: 'uuid, reporte_uuid, estado, pendiente',
+  cola_reportes: 'uuid, estado, creado_en',
+});
+
 export const ESTADOS = ['pendiente', 'subiendo', 'confirmada', 'fallida'];
 
 /** Al arrancar: nada puede quedar "subiendo" de una sesión anterior. */
