@@ -68,6 +68,7 @@ async function pedir<T>(metodo: string, ruta: string, datos?: unknown): Promise<
 
 export const get = <T>(ruta: string) => pedir<T>('GET', ruta);
 export const post = <T>(ruta: string, datos?: unknown) => pedir<T>('POST', ruta, datos);
+export const del = <T>(ruta: string) => pedir<T>('DELETE', ruta);
 
 export async function descargarArchivo(ruta: string, nombreArchivo: string): Promise<void> {
   const r = await fetch(`${API_BASE}${ruta}`, { headers: authHeaders() });

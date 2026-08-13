@@ -11,8 +11,10 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 import { EstadoReporte, RolUsuario } from '../../common/enums/dominio.enum';
 import { Asignacion } from '../../database/entities/asignacion.entity';
 import { EstadoFormulario, FormularioAis } from '../../database/entities/formulario-ais.entity';
+import { Foto } from '../../database/entities/foto.entity';
 import { Reporte } from '../../database/entities/reporte.entity';
 import { Usuario } from '../../database/entities/usuario.entity';
+import { StorageService } from '../storage/storage.service';
 import { AisService } from '../../shared/ais/ais.service';
 import type {
   AsignarReporteDto,
@@ -46,20 +48,23 @@ export class ModeracionService {
     private readonly asignacionesRepo: Repository<Asignacion>,
     @InjectRepository(FormularioAis)
     private readonly formulariosRepo: Repository<FormularioAis>,
+    @InjectRepository(Foto)
+    private readonly fotosRepo: Repository<Foto>,
     private readonly aisService: AisService,
     private readonly config: ConfigService,
+    private readonly storage: StorageService,
   ) {}
 
   async cola() {
+    const activos = await this.reportesRepo.find({
+      where: { estado: Not(EstadoReporte.DESCARTADO) },
+      select: ['id', 'lat', 'lng'],
+    });
+
     const nuevos = await this.reportesRepo.find({
       where: { estado: EstadoReporte.NUEVO },
       order: { creadoEn: 'ASC' },
       take: 200,
-    });
-
-    const activos = await this.reportesRepo.find({
-      where: { estado: Not(EstadoReporte.DESCARTADO) },
-      select: ['id', 'lat', 'lng'],
     });
 
     const enriquecidos = nuevos.map((r) => {
@@ -88,32 +93,44 @@ export class ModeracionService {
       const habA = a.reporte.habitada ? 1 : 0;
       const habB = b.reporte.habitada ? 1 : 0;
       if (habA !== habB) return habB - habA;
-      return a.reporte.creadoEn.getTime() - b.reporte.creadoEn.getTime();
+      return b.reporte.creadoEn.getTime() - a.reporte.creadoEn.getTime();
+    });
+
+    const fueraCola = await this.reportesRepo.find({
+      where: { estado: Not(EstadoReporte.NUEVO) },
+      order: { actualizadoEn: 'DESC' },
+      take: 100,
     });
 
     return {
-      reportes: enriquecidos.slice(0, 100).map(({ reporte, reportesDelPredio, lat, lng }) => ({
-        uuid: reporte.uuid,
-        consecutivo: reporte.consecutivo,
-        reportante_nombre: reporte.reportanteNombre,
-        reportante_telefono: reporte.reportanteTelefono,
-        reportante_relacion: reporte.reportanteRelacion,
-        direccion: reporte.direccion,
-        barrio: reporte.barrio,
-        comuna: reporte.comuna,
-        tipo_edificacion: reporte.tipoEdificacion,
-        pisos_declarados: reporte.pisosDeclarados,
-        unidades_declaradas: reporte.unidadesDeclaradas,
-        habitada: reporte.habitada,
-        uso_declarado: reporte.usoDeclarado,
-        descripcion: reporte.descripcion,
-        menciona_colapso: reporte.mencionaColapso,
-        creado_en: reporte.creadoEn,
-        lat,
-        lng,
-        reportes_del_predio: reportesDelPredio,
-      })),
+      en_cola: enriquecidos.slice(0, 100).map(({ reporte, reportesDelPredio, lat, lng }) =>
+        this.serializarReporte(reporte, { reportesDelPredio, lat, lng, enCola: true }),
+      ),
+      historial: fueraCola.map((reporte) =>
+        this.serializarReporte(reporte, {
+          reportesDelPredio: 0,
+          lat: Number(reporte.lat),
+          lng: Number(reporte.lng),
+          enCola: false,
+        }),
+      ),
     };
+  }
+
+  async eliminar(uuid: string) {
+    const reporte = await this.reportesRepo.findOne({ where: { uuid } });
+    if (!reporte) {
+      throw new NotFoundException({ error: 'no_existe', mensaje: 'Reporte no encontrado.' });
+    }
+
+    const fotos = await this.fotosRepo.find({ where: { reporteId: reporte.id } });
+    for (const foto of fotos) {
+      await this.storage.eliminar(foto.rutaFull);
+      await this.storage.eliminar(foto.rutaThumb);
+    }
+
+    await this.reportesRepo.remove(reporte);
+    return { ok: true };
   }
 
   async validar(uuid: string, dto: ValidarReporteDto) {
@@ -320,5 +337,38 @@ export class ModeracionService {
 
     const color = firmados[0]?.habitabilidadFinal;
     return color && ['naranja', 'rojo'].includes(color) ? color : null;
+  }
+
+  private serializarReporte(
+    reporte: Reporte,
+    extra: { reportesDelPredio: number; lat: number; lng: number; enCola: boolean },
+  ) {
+    return {
+      uuid: reporte.uuid,
+      consecutivo: reporte.consecutivo,
+      estado: reporte.estado,
+      en_cola: extra.enCola,
+      reportante_nombre: reporte.reportanteNombre,
+      reportante_telefono: reporte.reportanteTelefono,
+      reportante_relacion: reporte.reportanteRelacion,
+      direccion: reporte.direccion,
+      barrio: reporte.barrio,
+      comuna: reporte.comuna,
+      tipo_edificacion: reporte.tipoEdificacion,
+      pisos_declarados: reporte.pisosDeclarados,
+      unidades_declaradas: reporte.unidadesDeclaradas,
+      habitada: reporte.habitada,
+      uso_declarado: reporte.usoDeclarado,
+      descripcion: reporte.descripcion,
+      menciona_colapso: reporte.mencionaColapso,
+      requiere_nivel_a: reporte.requiereNivelA,
+      motivo_escalacion: reporte.motivoEscalacion,
+      motivo_descarte: reporte.motivoDescarte,
+      creado_en: reporte.creadoEn,
+      actualizado_en: reporte.actualizadoEn,
+      lat: extra.lat,
+      lng: extra.lng,
+      reportes_del_predio: extra.reportesDelPredio,
+    };
   }
 }

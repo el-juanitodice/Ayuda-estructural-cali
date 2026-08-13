@@ -1,11 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Phone, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Phone, ShieldAlert, Trash2 } from 'lucide-react';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { get, post } from '@/lib/api';
+import { del, get, post } from '@/lib/api';
 import type {
   ColaModeracionResponse,
   IngenieroDisponible,
@@ -15,8 +32,79 @@ import type {
 } from '@/types/moderation';
 import type { FotoResumen } from '@/types/revision';
 
+const ETIQUETA_ESTADO: Record<string, string> = {
+  validado: 'Validado',
+  descartado: 'Descartado',
+  asignado: 'Asignado',
+  en_captura: 'En captura',
+  en_revision_a: 'En revisión A',
+  requiere_especialista: 'Especialista',
+  vencido: 'Vencido',
+  cerrado: 'Cerrado',
+};
+
 function formatearFecha(iso: string) {
   return new Date(iso).toLocaleString('es-CO');
+}
+
+function puedeAsignar(reporte: ReporteCola) {
+  return reporte.estado === 'validado' || reporte.estado === 'vencido';
+}
+
+function EliminarReporteDialog({
+  reporte,
+  open,
+  eliminando,
+  onOpenChange,
+  onConfirmar,
+}: {
+  reporte: ReporteCola | null;
+  open: boolean;
+  eliminando: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirmar: () => void;
+}) {
+  if (!reporte) return null;
+
+  const radicado = reporte.consecutivo ?? reporte.uuid;
+  const estado = ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado;
+  const avisoEstado = reporte.estado !== 'nuevo' && reporte.estado !== 'descartado';
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent showClose={!eliminando}>
+        <DialogHeader>
+          <DialogTitle>¿Eliminar {radicado}?</DialogTitle>
+          <DialogDescription asChild>
+            <div className="space-y-3 pt-1 text-left text-sm text-muted-foreground">
+              {avisoEstado && (
+                <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 font-medium text-destructive">
+                  Atención: el reporte está en estado «{estado}».
+                </p>
+              )}
+              <p>Esta acción es permanente y no se puede deshacer.</p>
+              <div>
+                <p className="font-medium text-foreground">También se borrará en cascada:</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  <li>Asignaciones al reporte</li>
+                  <li>Formularios AIS y dictámenes</li>
+                  <li>Fotos en base de datos y archivos en disco</li>
+                </ul>
+              </div>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="secondary" disabled={eliminando} onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" disabled={eliminando} onClick={onConfirmar}>
+            {eliminando ? 'Eliminando…' : 'Eliminar reporte'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function DetalleReporte({
@@ -28,10 +116,19 @@ function DetalleReporte({
   onVolver: () => void;
   onActualizado: () => void;
 }) {
+  const asignacionDirecta = puedeAsignar(reporte);
   const [notas, setNotas] = useState('');
   const [ingenieros, setIngenieros] = useState<IngenieroDisponible[]>([]);
   const [ingenieroId, setIngenieroId] = useState('');
-  const [resultado, setResultado] = useState<ValidarResponse | null>(null);
+  const [resultado, setResultado] = useState<ValidarResponse | null>(
+    asignacionDirecta
+      ? {
+          ok: true,
+          requiere_nivel_a: reporte.requiere_nivel_a,
+          motivos: reporte.motivo_escalacion ?? [],
+        }
+      : null,
+  );
   const [fotos, setFotos] = useState<FotoResumen[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -43,10 +140,20 @@ function DetalleReporte({
   }, [reporte.uuid]);
 
   useEffect(() => {
-    get<{ ingenieros: IngenieroDisponible[] }>('/moderacion/ingenieros')
-      .then((r) => setIngenieros(r.ingenieros))
-      .catch(() => {});
-  }, []);
+    if (asignacionDirecta) {
+      get<{ ingenieros: IngenieroDisponible[] }>('/moderacion/ingenieros')
+        .then((r) => setIngenieros(r.ingenieros))
+        .catch(() => {});
+    }
+  }, [asignacionDirecta]);
+
+  useEffect(() => {
+    if (resultado && !ingenieros.length) {
+      get<{ ingenieros: IngenieroDisponible[] }>('/moderacion/ingenieros')
+        .then((r) => setIngenieros(r.ingenieros))
+        .catch(() => {});
+    }
+  }, [resultado, ingenieros.length]);
 
   const validar = async () => {
     setError(null);
@@ -93,6 +200,7 @@ function DetalleReporte({
 
   const requiereA = resultado?.requiere_nivel_a;
   const elegibles = requiereA ? ingenieros.filter((i) => i.rol === 'ingeniero_a') : ingenieros;
+  const soloLectura = !reporte.en_cola && !asignacionDirecta;
 
   return (
     <Card>
@@ -104,12 +212,15 @@ function DetalleReporte({
         <CardTitle>
           {reporte.consecutivo} — {reporte.direccion}
         </CardTitle>
-        {reporte.menciona_colapso && (
-          <CardDescription className="font-semibold text-destructive">
-            <ShieldAlert className="mr-1 inline size-4" />
-            Marcado como posible emergencia
-          </CardDescription>
-        )}
+        <CardDescription className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}</Badge>
+          {reporte.menciona_colapso && (
+            <span className="font-semibold text-destructive">
+              <ShieldAlert className="mr-1 inline size-4" />
+              Posible emergencia
+            </span>
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p>
@@ -129,6 +240,7 @@ function DetalleReporte({
           <li>Reportes del mismo predio: {reporte.reportes_del_predio}</li>
           <li>Recibido: {formatearFecha(reporte.creado_en)}</li>
           <li>Descripción: {reporte.descripcion || '—'}</li>
+          {reporte.motivo_descarte && <li>Motivo descarte: {reporte.motivo_descarte}</li>}
         </ul>
 
         <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
@@ -140,7 +252,12 @@ function DetalleReporte({
           />
         </div>
 
-        {!resultado ? (
+        {soloLectura ? (
+          <p className="text-sm text-muted-foreground">
+            Este reporte ya no está en cola. Solo puedes consultarlo o eliminarlo desde la tabla si
+            aplica.
+          </p>
+        ) : !resultado ? (
           <>
             <div className="space-y-2">
               <Label htmlFor="notas">Notas de la llamada (obligatorio)</Label>
@@ -173,7 +290,9 @@ function DetalleReporte({
         ) : (
           <div className="space-y-4 rounded-lg border border-green-200 bg-green-50 p-4">
             <p className="font-medium text-green-800">
-              Validado. Ya aparece como punto gris en el mapa público.
+              {asignacionDirecta
+                ? 'Pendiente de asignación.'
+                : 'Validado. Ya aparece como punto gris en el mapa público.'}
             </p>
             {requiereA && (
               <p className="text-sm font-medium text-destructive">
@@ -213,18 +332,97 @@ function DetalleReporte({
   );
 }
 
+function FilaReporte({
+  reporte,
+  atenuada,
+  eliminando,
+  onAbrir,
+  onEliminar,
+}: {
+  reporte: ReporteCola;
+  atenuada: boolean;
+  eliminando: boolean;
+  onAbrir: () => void;
+  onEliminar: () => void;
+}) {
+  const clickable = !atenuada || puedeAsignar(reporte);
+
+  return (
+    <TableRow
+      className={
+        atenuada
+          ? `text-muted-foreground opacity-70 hover:opacity-100${clickable ? ' cursor-pointer' : ''}`
+          : 'cursor-pointer'
+      }
+      onClick={clickable ? onAbrir : undefined}
+    >
+      <TableCell className="font-mono font-medium">{reporte.consecutivo ?? '—'}</TableCell>
+      <TableCell>
+        <div className={atenuada ? '' : 'font-medium'}>{reporte.direccion}</div>
+        <div className="text-xs">{reporte.barrio || 'Sin barrio'}</div>
+      </TableCell>
+      <TableCell>
+        {atenuada ? (
+          <Badge variant="outline" className="font-normal">
+            {ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}
+          </Badge>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {reporte.menciona_colapso && (
+              <Badge variant="destructive" className="text-xs">
+                Colapso
+              </Badge>
+            )}
+            {reporte.reportes_del_predio > 1 && (
+              <Badge variant="secondary" className="text-xs">
+                {reporte.reportes_del_predio} predio
+              </Badge>
+            )}
+            {!reporte.menciona_colapso && reporte.reportes_del_predio <= 1 && (
+              <span className="text-xs">En cola</span>
+            )}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="whitespace-nowrap text-xs">
+        {formatearFecha(atenuada ? reporte.actualizado_en : reporte.creado_en)}
+      </TableCell>
+      <TableCell className="text-right">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          disabled={eliminando}
+          title="Eliminar reporte y datos relacionados"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEliminar();
+          }}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function ModerationPage() {
-  const [cola, setCola] = useState<ReporteCola[]>([]);
+  const [enCola, setEnCola] = useState<ReporteCola[]>([]);
+  const [historial, setHistorial] = useState<ReporteCola[]>([]);
   const [seleccionado, setSeleccionado] = useState<ReporteCola | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [eliminandoUuid, setEliminandoUuid] = useState<string | null>(null);
+  const [reporteAEliminar, setReporteAEliminar] = useState<ReporteCola | null>(null);
 
   const cargarCola = useCallback(async () => {
     setCargando(true);
     setError(null);
     try {
       const r = await get<ColaModeracionResponse>('/moderacion/cola');
-      setCola(r.reportes);
+      setEnCola(r.en_cola);
+      setHistorial(r.historial);
       setSeleccionado(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar la cola');
@@ -237,6 +435,29 @@ export function ModerationPage() {
     void cargarCola();
   }, [cargarCola]);
 
+  const confirmarEliminacion = async () => {
+    if (!reporteAEliminar) return;
+
+    setEliminandoUuid(reporteAEliminar.uuid);
+    setError(null);
+    try {
+      await del(`/moderacion/${reporteAEliminar.uuid}`);
+      if (seleccionado?.uuid === reporteAEliminar.uuid) setSeleccionado(null);
+      setReporteAEliminar(null);
+      await cargarCola();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo eliminar');
+    } finally {
+      setEliminandoUuid(null);
+    }
+  };
+
+  const abrirReporte = (reporte: ReporteCola) => {
+    if (reporte.en_cola || puedeAsignar(reporte)) {
+      setSeleccionado(reporte);
+    }
+  };
+
   if (seleccionado) {
     return (
       <DetalleReporte
@@ -247,13 +468,15 @@ export function ModerationPage() {
     );
   }
 
+  const vacio = enCola.length === 0 && historial.length === 0;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">Moderación</h1>
           <p className="text-sm text-muted-foreground">
-            Cola ordenada por señales objetivas — valida tras llamar al reportante.
+            Nuevos arriba; procesados en gris abajo. Valida tras llamar al reportante.
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={() => void cargarCola()} disabled={cargando}>
@@ -265,43 +488,68 @@ export function ModerationPage() {
 
       {cargando ? (
         <p className="text-muted-foreground">Cargando cola…</p>
-      ) : cola.length === 0 ? (
+      ) : vacio ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No hay reportes nuevos en la cola.
+            No hay reportes en moderación.
           </CardContent>
         </Card>
       ) : (
-        <ul className="space-y-2">
-          {cola.map((r) => (
-            <li key={r.uuid}>
-              <button
-                type="button"
-                className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50"
-                onClick={() => setSeleccionado(r)}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold">{r.consecutivo}</p>
-                    <p className="text-sm">{r.direccion}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {r.barrio || 'Sin barrio'} · {formatearFecha(r.creado_en)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    {r.menciona_colapso && (
-                      <span className="rounded bg-destructive/10 px-2 py-1 text-destructive">Colapso</span>
-                    )}
-                    {r.reportes_del_predio > 1 && (
-                      <span className="rounded bg-muted px-2 py-1">{r.reportes_del_predio} reportes predio</span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Radicado</TableHead>
+                  <TableHead>Dirección</TableHead>
+                  <TableHead>Señales</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="w-12 text-right" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {enCola.map((r) => (
+                  <FilaReporte
+                    key={r.uuid}
+                    reporte={r}
+                    atenuada={false}
+                    eliminando={eliminandoUuid === r.uuid}
+                    onAbrir={() => abrirReporte(r)}
+                    onEliminar={() => setReporteAEliminar(r)}
+                  />
+                ))}
+                {historial.length > 0 && enCola.length > 0 && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={5} className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Fuera de cola ({historial.length})
+                    </TableCell>
+                  </TableRow>
+                )}
+                {historial.map((r) => (
+                  <FilaReporte
+                    key={r.uuid}
+                    reporte={r}
+                    atenuada
+                    eliminando={eliminandoUuid === r.uuid}
+                    onAbrir={() => abrirReporte(r)}
+                    onEliminar={() => setReporteAEliminar(r)}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
+
+      <EliminarReporteDialog
+        reporte={reporteAEliminar}
+        open={reporteAEliminar !== null}
+        eliminando={eliminandoUuid === reporteAEliminar?.uuid}
+        onOpenChange={(open) => {
+          if (!open && !eliminandoUuid) setReporteAEliminar(null);
+        }}
+        onConfirmar={() => void confirmarEliminacion()}
+      />
     </div>
   );
 }

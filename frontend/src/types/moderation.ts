@@ -1,6 +1,8 @@
 export interface ReporteCola {
   uuid: string;
   consecutivo: string | null;
+  estado: string;
+  en_cola: boolean;
   reportante_nombre: string;
   reportante_telefono: string;
   reportante_relacion: string | null;
@@ -14,14 +16,19 @@ export interface ReporteCola {
   uso_declarado: number | null;
   descripcion: string | null;
   menciona_colapso: boolean;
+  requiere_nivel_a: boolean;
+  motivo_escalacion: string[] | null;
+  motivo_descarte: string | null;
   creado_en: string;
+  actualizado_en: string;
   lat: number;
   lng: number;
   reportes_del_predio: number;
 }
 
 export interface ColaModeracionResponse {
-  reportes: ReporteCola[];
+  en_cola: ReporteCola[];
+  historial: ReporteCola[];
 }
 
 export interface IngenieroDisponible {

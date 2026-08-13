@@ -1,4 +1,4 @@
-import { mkdir, writeFile, access, readFile } from 'node:fs/promises';
+import { mkdir, writeFile, access, readFile, unlink } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -48,6 +48,15 @@ export class StorageService implements OnModuleInit {
 
   async leer(relativa: string): Promise<Buffer> {
     return readFile(this.resolverRelativa(relativa));
+  }
+
+  async eliminar(relativa: string): Promise<void> {
+    try {
+      await unlink(this.resolverRelativa(relativa));
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT') throw err;
+    }
   }
 
   /** Convierte ruta relativa de BD a ruta absoluta en disco, bloqueando path traversal */
