@@ -1,16 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { PropositoToken } from '../../common/enums/dominio.enum';
 
 @Injectable()
-export class CorreoService {
+export class CorreoService implements OnModuleInit {
   private readonly logger = new Logger(CorreoService.name);
   private readonly resend: Resend | null;
+  private readonly remitente: string;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = this.config.get<string>('correo.resendApiKey');
+    const apiKey = this.config.get<string>('correo.resendApiKey')?.trim();
+    this.remitente = this.config.get<string>('correo.remitente', 'no-responder@ejemplo.co');
     this.resend = apiKey ? new Resend(apiKey) : null;
+  }
+
+  onModuleInit() {
+    if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY ausente: los enlaces de alta/recuperación solo se loguean');
+      return;
+    }
+    this.logger.log(`Correo Resend activo (remitente: ${this.remitente})`);
   }
 
   estaConfigurado(): boolean {
@@ -37,9 +47,7 @@ export class CorreoService {
     const enlace = this.construirEnlace(token, proposito);
 
     if (!this.resend) {
-      this.logger.warn(
-        `RESEND_API_KEY ausente: enlace solo en log (${email}) → ${enlace}`,
-      );
+      this.logger.warn(`Sin Resend (${email}) → ${enlace}`);
       return;
     }
 
@@ -49,8 +57,8 @@ export class CorreoService {
         : 'Recuperación de contraseña — Inspección post-sísmica Cali';
 
     try {
-      await this.resend.emails.send({
-        from: this.config.get<string>('correo.remitente', 'no-responder@ejemplo.co'),
+      const { data, error } = await this.resend.emails.send({
+        from: this.remitente,
         to: email,
         subject: asunto,
         text: [
@@ -66,9 +74,18 @@ export class CorreoService {
           'Si no esperabas este correo, ignóralo.',
         ].join('\n'),
       });
+
+      if (error) {
+        this.logger.error(
+          `Resend rechazó el envío a ${email}: [${error.name}] ${error.message} — enlace: ${enlace}`,
+        );
+        return;
+      }
+
+      this.logger.log(`Correo enviado a ${email} (id: ${data?.id ?? '?'})`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Fallo el envío de correo (${email}): ${msg} — enlace: ${enlace}`);
+      this.logger.error(`Excepción al enviar correo (${email}): ${msg} — enlace: ${enlace}`);
     }
   }
 }
