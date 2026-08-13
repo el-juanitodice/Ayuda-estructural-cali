@@ -1,9 +1,9 @@
 import type { DanoAis } from '@/types/revision';
 
 export interface AsignacionCampo {
-  asignacion_id: number;
-  vence_en: string;
-  rol_asignado: string;
+  asignacion_id: number | null;
+  vence_en: string | null;
+  rol_asignado: string | null;
   reporte_uuid: string;
   consecutivo: string;
   direccion: string;
@@ -22,14 +22,19 @@ export interface AsignacionCampo {
   lng: number;
   formulario_uuid: string | null;
   formulario_estado: string | null;
+  capturado_en?: string | null;
+  firmado_en?: string | null;
+  activa: boolean;
+  editable: boolean;
 }
 
 export interface MisAsignacionesResponse {
-  asignaciones: AsignacionCampo[];
+  activas: AsignacionCampo[];
+  historial: AsignacionCampo[];
   fotos: Record<string, Array<{ uuid: string; categoria: string; piso: string | null; origen: string }>>;
 }
 
-export type EstadoFormularioCampo = 'borrador' | 'capturado';
+export type EstadoFormularioCampo = 'borrador' | 'capturado' | 'firmado';
 
 export interface FormularioCampoPayload {
   uuid: string;

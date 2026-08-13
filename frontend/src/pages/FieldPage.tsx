@@ -16,12 +16,95 @@ import {
 import { get } from '@/lib/api';
 import type { AsignacionCampo, MisAsignacionesResponse } from '@/types/campo';
 
-function formatearFecha(iso: string) {
+function formatearFecha(iso: string | null | undefined) {
+  if (!iso) return '—';
   return new Date(iso).toLocaleString('es-CO');
 }
 
+const ETIQUETA_FORMULARIO: Record<string, string> = {
+  borrador: 'Borrador',
+  capturado: 'En revisión A',
+  firmado: 'Dictamen firmado',
+};
+
+function etiquetaAccion(item: AsignacionCampo) {
+  if (item.editable) {
+    if (!item.formulario_estado || item.formulario_estado === 'borrador') {
+      return item.formulario_estado === 'borrador' ? 'Continuar' : 'Inspeccionar';
+    }
+    if (item.formulario_estado === 'capturado') return 'Corregir captura';
+    return 'Abrir';
+  }
+  return 'Ver captura';
+}
+
+function TablaAsignaciones({
+  items,
+  atenuada,
+  onAbrir,
+}: {
+  items: AsignacionCampo[];
+  atenuada?: boolean;
+  onAbrir: (item: AsignacionCampo) => void;
+}) {
+  if (!items.length) return null;
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Radicado</TableHead>
+          <TableHead>Dirección</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>Fecha</TableHead>
+          <TableHead />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((a) => (
+          <TableRow key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`} className={atenuada ? 'text-muted-foreground' : undefined}>
+            <TableCell className="font-medium">
+              {a.consecutivo}
+              {a.requiere_nivel_a && (
+                <Badge variant="destructive" className="ml-2">
+                  nivel A
+                </Badge>
+              )}
+            </TableCell>
+            <TableCell>
+              {a.direccion}
+              {a.barrio ? ` · ${a.barrio}` : ''}
+            </TableCell>
+            <TableCell>
+              <div className="flex flex-wrap items-center gap-1">
+                <Badge variant="outline" className="font-normal">
+                  {ETIQUETA_FORMULARIO[a.formulario_estado ?? ''] ?? a.estado}
+                </Badge>
+                {a.editable && (
+                  <Badge variant="secondary" className="text-xs">
+                    editable
+                  </Badge>
+                )}
+              </div>
+            </TableCell>
+            <TableCell className="whitespace-nowrap text-xs">
+              {formatearFecha(a.firmado_en ?? a.capturado_en ?? a.vence_en)}
+            </TableCell>
+            <TableCell className="text-right">
+              <Button size="sm" variant={a.editable ? 'default' : 'outline'} onClick={() => onAbrir(a)}>
+                {etiquetaAccion(a)}
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 export function FieldPage() {
-  const [asignaciones, setAsignaciones] = useState<AsignacionCampo[] | null>(null);
+  const [activas, setActivas] = useState<AsignacionCampo[]>([]);
+  const [historial, setHistorial] = useState<AsignacionCampo[]>([]);
   const [fotosPorReporte, setFotosPorReporte] = useState<MisAsignacionesResponse['fotos']>({});
   const [abierta, setAbierta] = useState<AsignacionCampo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +115,8 @@ export function FieldPage() {
     setError(null);
     get<MisAsignacionesResponse>('/campo/mis-asignaciones')
       .then((r) => {
-        setAsignaciones(r.asignaciones);
+        setActivas(r.activas);
+        setHistorial(r.historial);
         setFotosPorReporte(r.fotos);
         setAbierta(null);
       })
@@ -55,13 +139,16 @@ export function FieldPage() {
     );
   }
 
+  const vacio = activas.length === 0 && historial.length === 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Inspección de campo</h1>
           <p className="text-sm text-muted-foreground">
-            Casos asignados pendientes de captura. Al cerrar pasan a Revisión nivel A.
+            Casos activos arriba; abajo puedes consultar capturas anteriores y corregirlas mientras sigan en
+            revisión.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
@@ -76,54 +163,43 @@ export function FieldPage() {
         </Alert>
       )}
 
-      {cargando && !asignaciones ? (
+      {cargando && vacio ? (
         <p className="text-muted-foreground">Cargando asignaciones…</p>
-      ) : !asignaciones?.length ? (
+      ) : vacio ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            No tienes asignaciones activas.
+            No tienes asignaciones ni capturas registradas.
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Radicado</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Vence</TableHead>
-                <TableHead>Captura</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {asignaciones.map((a) => (
-                <TableRow key={a.asignacion_id}>
-                  <TableCell className="font-medium">
-                    {a.consecutivo}
-                    {a.requiere_nivel_a && (
-                      <Badge variant="destructive" className="ml-2">
-                        nivel A
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {a.direccion}
-                    {a.barrio ? ` · ${a.barrio}` : ''}
-                  </TableCell>
-                  <TableCell>{formatearFecha(a.vence_en)}</TableCell>
-                  <TableCell>
-                    {a.formulario_estado ? `captura ${a.formulario_estado}` : 'sin empezar'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" onClick={() => setAbierta(a)}>
-                      {a.formulario_estado === 'borrador' ? 'Continuar' : 'Inspeccionar'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-6">
+          {activas.length > 0 && (
+            <Card>
+              <CardContent className="p-0">
+                <div className="border-b px-4 py-2 text-sm font-medium">Activas ({activas.length})</div>
+                <TablaAsignaciones items={activas} onAbrir={setAbierta} />
+              </CardContent>
+            </Card>
+          )}
+
+          {activas.length === 0 && !cargando && (
+            <Card>
+              <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No tienes asignaciones activas en este momento.
+              </CardContent>
+            </Card>
+          )}
+
+          {historial.length > 0 && (
+            <Card>
+              <CardContent className="p-0">
+                <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium text-muted-foreground">
+                  Historial ({historial.length})
+                </div>
+                <TablaAsignaciones items={historial} atenuada onAbrir={setAbierta} />
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

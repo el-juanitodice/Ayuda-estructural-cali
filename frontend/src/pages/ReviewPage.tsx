@@ -70,10 +70,12 @@ function formatearFecha(iso: string) {
 
 function DetalleRevision({
   item,
+  editable,
   onVolver,
   onFirmado,
 }: {
   item: ItemColaRevision;
+  editable: boolean;
   onVolver: () => void;
   onFirmado: () => void;
 }) {
@@ -97,10 +99,23 @@ function DetalleRevision({
   useEffect(() => {
     setCargando(true);
     get<FormularioResponse>(`/campo/formularios/${item.formulario_uuid}`)
-      .then(setDatos)
+      .then((r) => {
+        setDatos(r);
+        if (!editable && r.formulario.estado === 'firmado') {
+          setRiesgos({
+            estabilidad: (r.formulario.riesgo_estabilidad as NivelRiesgo) || '',
+            geotecnico: (r.formulario.riesgo_geotecnico as NivelRiesgo) || '',
+            estructural: (r.formulario.riesgo_estructural as NivelRiesgo) || '',
+            no_estructural: (r.formulario.riesgo_no_estructural as NivelRiesgo) || '',
+          });
+          setColorFinal(r.formulario.habitabilidad_final ?? '');
+          setMotivo(r.formulario.motivo_discrepancia ?? '');
+          setVisita(Boolean(r.formulario.visita_presencial_a));
+        }
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo cargar'))
       .finally(() => setCargando(false));
-  }, [item.formulario_uuid]);
+  }, [item.formulario_uuid, editable]);
 
   const chequeo = useMemo(
     () =>
@@ -294,35 +309,62 @@ function DetalleRevision({
         <CardHeader>
           <CardTitle className="text-lg">Dictamen — niveles de riesgo</CardTitle>
           <CardDescription>
-            El sistema calcula la habitabilidad sugerida en vivo. Si eliges otro color, debes
-            justificarlo.
+            {editable
+              ? 'El sistema calcula la habitabilidad sugerida en vivo. Si eliges otro color, debes justificarlo.'
+              : 'Dictamen firmado — solo lectura.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {!editable && colorFinal && (
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+              <HabitabilidadBadge
+                color={colorFinal as HabitabilidadColor}
+                etiqueta={ETIQUETA_HABITABILIDAD[colorFinal as HabitabilidadColor]}
+              />
+              {datos.formulario.firmado_por_nombre && (
+                <p className="text-sm text-muted-foreground">
+                  Firmado por {datos.formulario.firmado_por_nombre}
+                  {datos.formulario.firmado_en
+                    ? ` · ${formatearFecha(datos.formulario.firmado_en)}`
+                    : ''}
+                </p>
+              )}
+              <Button asChild size="sm">
+                <Link to={`${routes.aviso}?uuid=${item.formulario_uuid}`}>Ver aviso / imprimir</Link>
+              </Button>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             {(Object.keys(NOMBRE_RIESGO) as (keyof RiesgosDictamen)[]).map((k) => (
               <div key={k} className="space-y-2">
                 <Label>{NOMBRE_RIESGO[k]}</Label>
-                <Select
-                  value={riesgos[k] || undefined}
-                  onValueChange={(v) => setRiesgos({ ...riesgos, [k]: v as NivelRiesgo })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="— asignar —" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NIVELES_RIESGO.map((n) => (
-                      <SelectItem key={n} value={n}>
-                        {ETIQUETA_RIESGO[n as NivelRiesgo]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {editable ? (
+                  <Select
+                    value={riesgos[k] || undefined}
+                    onValueChange={(v) => setRiesgos({ ...riesgos, [k]: v as NivelRiesgo })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="— asignar —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NIVELES_RIESGO.map((n) => (
+                        <SelectItem key={n} value={n}>
+                          {ETIQUETA_RIESGO[n as NivelRiesgo]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm">
+                    {riesgos[k] ? ETIQUETA_RIESGO[riesgos[k] as NivelRiesgo] : '—'}
+                  </p>
+                )}
               </div>
             ))}
           </div>
 
-          {chequeo.sugerida && (
+          {editable && chequeo.sugerida && (
             <p className="text-sm">
               Según los riesgos marcados corresponde:{' '}
               <HabitabilidadBadge
@@ -335,24 +377,33 @@ function DetalleRevision({
 
           <div className="space-y-2">
             <Label>Habitabilidad final (tu criterio profesional)</Label>
-            <Select
-              value={colorFinal || undefined}
-              onValueChange={(v) => setColorFinal(v as HabitabilidadColor)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="— elegir —" />
-              </SelectTrigger>
-              <SelectContent>
-                {HABITABILIDAD.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {ETIQUETA_HABITABILIDAD[c as HabitabilidadColor]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {editable ? (
+              <Select
+                value={colorFinal || undefined}
+                onValueChange={(v) => setColorFinal(v as HabitabilidadColor)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="— elegir —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {HABITABILIDAD.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {ETIQUETA_HABITABILIDAD[c as HabitabilidadColor]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              colorFinal && (
+                <HabitabilidadBadge
+                  color={colorFinal as HabitabilidadColor}
+                  etiqueta={ETIQUETA_HABITABILIDAD[colorFinal as HabitabilidadColor]}
+                />
+              )
+            )}
           </div>
 
-          {discrepancia && (
+          {editable && discrepancia && (
             <div className="space-y-2">
               <Alert variant="destructive">
                 <AlertDescription>{chequeo.mensaje}</AlertDescription>
@@ -367,10 +418,18 @@ function DetalleRevision({
             </div>
           )}
 
+          {!editable && motivo && (
+            <div className="space-y-2">
+              <Label>Motivo de discrepancia</Label>
+              <p className="text-sm">{motivo}</p>
+            </div>
+          )}
+
           <div className="flex items-start gap-2">
             <Checkbox
               id="visita"
               checked={visita}
+              disabled={!editable}
               onCheckedChange={(v) => setVisita(v === true)}
             />
             <div className="space-y-1">
@@ -387,12 +446,12 @@ function DetalleRevision({
             </Alert>
           )}
 
-          {!pidiendoClave ? (
+          {editable && !pidiendoClave ? (
             <Button disabled={!puedeFirmar} onClick={() => setPidiendoClave(true)}>
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Firmar dictamen…
             </Button>
-          ) : (
+          ) : editable ? (
             <Card className="border-primary/30 bg-muted/30">
               <CardContent className="space-y-4 pt-6">
                 <p className="font-medium">Confirma tu identidad para firmar</p>
@@ -419,7 +478,7 @@ function DetalleRevision({
                 </div>
               </CardContent>
             </Card>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </div>
@@ -427,7 +486,8 @@ function DetalleRevision({
 }
 
 export function ReviewPage() {
-  const [cola, setCola] = useState<ItemColaRevision[] | null>(null);
+  const [pendientes, setPendientes] = useState<ItemColaRevision[]>([]);
+  const [historial, setHistorial] = useState<ItemColaRevision[]>([]);
   const [abierto, setAbierto] = useState<ItemColaRevision | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -437,7 +497,8 @@ export function ReviewPage() {
     setError(null);
     get<ColaRevisionResponse>('/campo/revision')
       .then((r) => {
-        setCola(r.pendientes);
+        setPendientes(r.pendientes);
+        setHistorial(r.historial);
         setAbierto(null);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo cargar la cola'))
@@ -452,11 +513,17 @@ export function ReviewPage() {
     return (
       <DetalleRevision
         item={abierto}
+        editable={abierto.editable}
         onVolver={() => setAbierto(null)}
-        onFirmado={() => setCola((prev) => prev?.filter((i) => i.formulario_uuid !== abierto.formulario_uuid) ?? [])}
+        onFirmado={() => {
+          setPendientes((prev) => prev.filter((i) => i.formulario_uuid !== abierto.formulario_uuid));
+          void cargar();
+        }}
       />
     );
   }
+
+  const vacio = pendientes.length === 0 && historial.length === 0;
 
   return (
     <div className="space-y-6">
@@ -464,7 +531,7 @@ export function ReviewPage() {
         <div>
           <h1 className="text-2xl font-semibold">Revisión nivel A</h1>
           <p className="text-sm text-muted-foreground">
-            Capturas cerradas por ingeniero B pendientes de dictamen y firma.
+            Pendientes arriba; abajo el historial de dictámenes firmados para consulta.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
@@ -479,47 +546,112 @@ export function ReviewPage() {
         </Alert>
       )}
 
-      {cargando && !cola ? (
+      {cargando && vacio ? (
         <p className="text-muted-foreground">Cargando cola…</p>
-      ) : !cola?.length ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            No hay capturas pendientes de revisión.
-          </CardContent>
-        </Card>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Radicado</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Comuna</TableHead>
-                <TableHead>Capturado por</TableHead>
-                <TableHead>Fecha captura</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cola.map((item) => (
-                <TableRow key={item.formulario_uuid}>
-                  <TableCell className="font-medium">{item.consecutivo}</TableCell>
-                  <TableCell>
-                    {item.direccion}
-                    {item.barrio ? ` · ${item.barrio}` : ''}
-                  </TableCell>
-                  <TableCell>{item.comuna ?? '—'}</TableCell>
-                  <TableCell>{item.capturado_por_nombre ?? '—'}</TableCell>
-                  <TableCell>{formatearFecha(item.capturado_en)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" onClick={() => setAbierto(item)}>
-                      Revisar
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-6">
+          {pendientes.length > 0 ? (
+            <Card>
+              <CardContent className="p-0">
+                <div className="border-b px-4 py-2 text-sm font-medium">
+                  Pendientes de firma ({pendientes.length})
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Radicado</TableHead>
+                        <TableHead>Dirección</TableHead>
+                        <TableHead>Comuna</TableHead>
+                        <TableHead>Capturado por</TableHead>
+                        <TableHead>Fecha captura</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendientes.map((item) => (
+                        <TableRow key={item.formulario_uuid}>
+                          <TableCell className="font-medium">{item.consecutivo}</TableCell>
+                          <TableCell>
+                            {item.direccion}
+                            {item.barrio ? ` · ${item.barrio}` : ''}
+                          </TableCell>
+                          <TableCell>{item.comuna ?? '—'}</TableCell>
+                          <TableCell>{item.capturado_por_nombre ?? '—'}</TableCell>
+                          <TableCell>{formatearFecha(item.capturado_en)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" onClick={() => setAbierto(item)}>
+                              Revisar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            !cargando && (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  No hay capturas pendientes de revisión.
+                </CardContent>
+              </Card>
+            )
+          )}
+
+          {historial.length > 0 && (
+            <Card>
+              <CardContent className="p-0">
+                <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium text-muted-foreground">
+                  Historial de dictámenes ({historial.length})
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Radicado</TableHead>
+                        <TableHead>Dirección</TableHead>
+                        <TableHead>Dictamen</TableHead>
+                        <TableHead>Firmado por</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {historial.map((item) => (
+                        <TableRow key={item.formulario_uuid} className="text-muted-foreground">
+                          <TableCell className="font-medium">{item.consecutivo}</TableCell>
+                          <TableCell>
+                            {item.direccion}
+                            {item.barrio ? ` · ${item.barrio}` : ''}
+                          </TableCell>
+                          <TableCell>
+                            {item.habitabilidad_final ? (
+                              <HabitabilidadBadge
+                                color={item.habitabilidad_final}
+                                etiqueta={ETIQUETA_HABITABILIDAD[item.habitabilidad_final]}
+                              />
+                            ) : (
+                              '—'
+                            )}
+                          </TableCell>
+                          <TableCell>{item.firmado_por_nombre ?? '—'}</TableCell>
+                          <TableCell>{formatearFecha(item.firmado_en ?? item.capturado_en)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="outline" onClick={() => setAbierto(item)}>
+                              Ver dictamen
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

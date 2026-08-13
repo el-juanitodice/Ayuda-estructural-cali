@@ -14,10 +14,16 @@ export interface ItemColaRevision {
   visita_presencial_b: boolean;
   capturado_por_nombre: string | null;
   capturado_por_matricula: string | null;
+  editable: boolean;
+  firmado_en?: string;
+  firmado_por_nombre?: string | null;
+  firmado_por_matricula?: string | null;
+  habitabilidad_final?: HabitabilidadColor | null;
 }
 
 export interface ColaRevisionResponse {
   pendientes: ItemColaRevision[];
+  historial: ItemColaRevision[];
 }
 
 export interface DanoAis {
@@ -68,6 +74,12 @@ export interface FormularioDetalle {
   firmado_por_nombre: string | null;
   firmado_por_matricula: string | null;
   habitabilidad_final: HabitabilidadColor | null;
+  habitabilidad_sugerida: HabitabilidadColor | null;
+  riesgo_estabilidad: string | null;
+  riesgo_geotecnico: string | null;
+  riesgo_estructural: string | null;
+  riesgo_no_estructural: string | null;
+  motivo_discrepancia: string | null;
   firmado_en: string | null;
   numero_formulario: string;
 }

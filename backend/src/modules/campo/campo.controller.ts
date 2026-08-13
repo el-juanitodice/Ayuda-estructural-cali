@@ -24,8 +24,8 @@ export class CampoController {
 
   @Get('revision')
   @Roles(RolUsuario.INGENIERO_A)
-  colaRevision() {
-    return this.campoService.colaRevision();
+  colaRevision(@UsuarioActual() usuario: UsuarioJwt) {
+    return this.campoService.colaRevision(usuario.sub);
   }
 
   @Get('formularios/:uuid')

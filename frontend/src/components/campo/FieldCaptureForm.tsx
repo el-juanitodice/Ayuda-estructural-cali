@@ -91,7 +91,7 @@ export function FieldCaptureForm({
           setForm({
             uuid: f.uuid,
             reporte_uuid: f.reporte_uuid,
-            estado: f.estado as 'borrador' | 'capturado',
+            estado: f.estado as 'borrador' | 'capturado' | 'firmado',
             visita_presencial_b: Boolean(f.visita_presencial_b),
             sistema_estructural: f.sistema_estructural ?? 21,
             colapso: f.colapso ?? 'ninguno',
@@ -119,7 +119,8 @@ export function FieldCaptureForm({
 
   const guardar = useCallback(
     async (payload: FormularioCampoPayload, silencioso = false) => {
-      if (payload.estado === 'capturado') return;
+      if (!asignacion.editable) return;
+      if (payload.estado === 'capturado' || payload.estado === 'firmado') return;
       if (!silencioso) setGuardando(true);
       try {
         await post<GuardarFormularioResponse>('/campo/formularios', payload);
@@ -134,21 +135,40 @@ export function FieldCaptureForm({
         if (!silencioso) setGuardando(false);
       }
     },
-    [],
+    [asignacion.editable],
+  );
+
+  const guardarCaptura = useCallback(
+    async (payload: FormularioCampoPayload) => {
+      if (!asignacion.editable) return;
+      setGuardando(true);
+      try {
+        await post<GuardarFormularioResponse>('/campo/formularios', payload);
+        toast.success('Captura actualizada');
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'No se pudo guardar';
+        setError(msg);
+        toast.error('No se pudo guardar', { description: msg });
+      } finally {
+        setGuardando(false);
+      }
+    },
+    [asignacion.editable],
   );
 
   const programarGuardado = useCallback(
     (payload: FormularioCampoPayload) => {
-      if (payload.estado === 'capturado') return;
+      if (!asignacion.editable || payload.estado !== 'borrador') return;
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
       debounceRef.current = window.setTimeout(() => {
         guardar(payload, true).catch(() => {});
       }, 800);
     },
-    [guardar],
+    [guardar, asignacion.editable],
   );
 
   const actualizar = (parcial: Partial<FormularioCampoPayload>) => {
+    if (!asignacion.editable) return;
     setForm((prev) => {
       if (!prev) return prev;
       let next = { ...prev, ...parcial };
@@ -193,7 +213,9 @@ export function FieldCaptureForm({
     return <p className="text-muted-foreground">Cargando formulario…</p>;
   }
 
-  const cerrado = form.estado === 'capturado';
+  const soloLectura = !asignacion.editable || form.estado === 'firmado';
+  const capturaEnRevision = form.estado === 'capturado' && asignacion.editable;
+  const puedeCerrarCaptura = asignacion.editable && form.estado === 'borrador';
 
   return (
     <div className="space-y-6">
@@ -211,9 +233,23 @@ export function FieldCaptureForm({
             Reporte ciudadano: “{asignacion.descripcion}”
           </p>
         )}
-        {cerrado && (
+        {form.estado === 'firmado' && (
           <Alert className="mt-3">
-            <AlertDescription>Captura cerrada — ya no se puede editar aquí.</AlertDescription>
+            <AlertDescription>
+              Dictamen firmado — captura de solo lectura. Consulta el aviso desde Revisión.
+            </AlertDescription>
+          </Alert>
+        )}
+        {capturaEnRevision && (
+          <Alert className="mt-3 border-amber-300 bg-amber-50 text-amber-950">
+            <AlertDescription>
+              En revisión nivel A. Puedes corregir la captura mientras no haya dictamen firmado.
+            </AlertDescription>
+          </Alert>
+        )}
+        {soloLectura && form.estado === 'capturado' && !capturaEnRevision && (
+          <Alert className="mt-3">
+            <AlertDescription>Captura cerrada — solo lectura.</AlertDescription>
           </Alert>
         )}
       </div>
@@ -242,7 +278,7 @@ export function FieldCaptureForm({
           <Checkbox
             id="visita"
             checked={form.visita_presencial_b}
-            disabled={cerrado}
+            disabled={soloLectura}
             onCheckedChange={(v) => actualizar({ visita_presencial_b: v === true })}
           />
           <Label htmlFor="visita">Visita presencial</Label>
@@ -259,7 +295,7 @@ export function FieldCaptureForm({
             <Input
               type="number"
               min={1}
-              disabled={cerrado}
+              disabled={soloLectura}
               value={form.pisos_sobre_terreno ?? ''}
               onChange={(e) =>
                 actualizar({
@@ -271,7 +307,7 @@ export function FieldCaptureForm({
           <div className="space-y-2">
             <Label>Sistema estructural</Label>
             <Select
-              disabled={cerrado}
+              disabled={soloLectura}
               value={String(form.sistema_estructural)}
               onValueChange={(v) => actualizar({ sistema_estructural: Number(v) })}
             >
@@ -290,7 +326,7 @@ export function FieldCaptureForm({
           <div className="space-y-2">
             <Label>Época de construcción</Label>
             <Select
-              disabled={cerrado}
+              disabled={soloLectura}
               value={String(form.anio_construccion)}
               onValueChange={(v) => actualizar({ anio_construccion: Number(v) })}
             >
@@ -324,7 +360,7 @@ export function FieldCaptureForm({
             <div key={campo} className="space-y-2">
               <Label>{etiqueta}</Label>
               <Select
-                disabled={cerrado}
+                disabled={soloLectura}
                 value={form[campo]}
                 onValueChange={(v) => actualizar({ [campo]: v } as Partial<FormularioCampoPayload>)}
               >
@@ -352,7 +388,7 @@ export function FieldCaptureForm({
         <CardContent>
           <DamageMatrix
             filas={form.danos}
-            soloLectura={cerrado}
+            soloLectura={soloLectura}
             onChange={(danos) => actualizar({ danos })}
           />
         </CardContent>
@@ -366,7 +402,7 @@ export function FieldCaptureForm({
           <div className="space-y-2">
             <Label>Piso con mayor daño</Label>
             <Input
-              disabled={cerrado}
+              disabled={soloLectura}
               value={form.piso_mayor_dano}
               onChange={(e) => actualizar({ piso_mayor_dano: e.target.value })}
             />
@@ -374,7 +410,7 @@ export function FieldCaptureForm({
           <div className="space-y-2">
             <Label>% daño global</Label>
             <Select
-              disabled={cerrado}
+              disabled={soloLectura}
               value={form.porcentaje_dano}
               onValueChange={(v) => actualizar({ porcentaje_dano: v })}
             >
@@ -394,7 +430,7 @@ export function FieldCaptureForm({
             <Label>Comentarios de campo</Label>
             <Textarea
               rows={4}
-              disabled={cerrado}
+              disabled={soloLectura}
               value={form.comentarios}
               onChange={(e) => actualizar({ comentarios: e.target.value })}
             />
@@ -408,13 +444,20 @@ export function FieldCaptureForm({
         </Alert>
       )}
 
-      {!cerrado && (
+      {puedeCerrarCaptura && (
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={guardando} onClick={() => guardar(form)}>
             Guardar borrador
           </Button>
           <Button disabled={!matrizValida || guardando} onClick={cerrarCaptura}>
             Cerrar captura → revisión A
+          </Button>
+        </div>
+      )}
+      {capturaEnRevision && form && (
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={!matrizValida || guardando} onClick={() => guardarCaptura(form)}>
+            Guardar cambios
           </Button>
         </div>
       )}

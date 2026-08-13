@@ -49,40 +49,46 @@ export class CampoService {
       });
     }
 
-    const filas = await this.dataSource.query<
-      {
-        asignacion_id: string;
-        vence_en: Date;
-        rol_asignado: string;
-        reporte_id: string;
-        reporte_uuid: string;
-        consecutivo: string;
-        direccion: string;
-        barrio: string | null;
-        comuna: string | null;
-        tipo_edificacion: string | null;
-        pisos_declarados: number | null;
-        unidades_declaradas: number | null;
-        habitada: number | null;
-        uso_declarado: number | null;
-        descripcion: string | null;
-        estado: string;
-        requiere_nivel_a: number;
-        motivo_escalacion: string[] | null;
-        lat: string;
-        lng: string;
-        formulario_uuid: string | null;
-        formulario_estado: string | null;
-      }[]
-    >(
+    type FilaAsignacion = {
+      asignacion_id: string | null;
+      vence_en: Date | null;
+      cerrada_en: Date | null;
+      liberada_en: Date | null;
+      rol_asignado: string | null;
+      reporte_id: string;
+      reporte_uuid: string;
+      consecutivo: string;
+      direccion: string;
+      barrio: string | null;
+      comuna: string | null;
+      tipo_edificacion: string | null;
+      pisos_declarados: number | null;
+      unidades_declaradas: number | null;
+      habitada: number | null;
+      uso_declarado: number | null;
+      descripcion: string | null;
+      estado: string;
+      requiere_nivel_a: number;
+      motivo_escalacion: string[] | null;
+      lat: string;
+      lng: string;
+      formulario_uuid: string | null;
+      formulario_estado: string | null;
+      capturado_por_id: string | null;
+      capturado_en: Date | null;
+      firmado_en: Date | null;
+    };
+
+    const activas = await this.dataSource.query<FilaAsignacion[]>(
       `
-      SELECT a.id AS asignacion_id, a.vence_en, a.rol_asignado,
+      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.rol_asignado,
              r.id AS reporte_id, r.uuid AS reporte_uuid, r.consecutivo, r.direccion, r.barrio, r.comuna,
              r.tipo_edificacion, r.pisos_declarados, r.unidades_declaradas,
              r.habitada, r.uso_declarado, r.descripcion, r.estado,
              r.requiere_nivel_a, r.motivo_escalacion,
              r.lat, r.lng,
-             f.uuid AS formulario_uuid, f.estado AS formulario_estado
+             f.uuid AS formulario_uuid, f.estado AS formulario_estado,
+             f.capturado_por AS capturado_por_id, f.capturado_en, f.firmado_en
       FROM asignaciones a
       INNER JOIN reportes r ON r.id = a.reporte_id
       LEFT JOIN formularios_ais f ON f.reporte_id = r.id AND f.estado <> 'firmado'
@@ -94,11 +100,46 @@ export class CampoService {
       [usuario.id],
     );
 
-    const fotos: Record<string, Array<{ uuid: string; categoria: string; piso: string | null; origen: string }>> = {};
+    const historial = await this.dataSource.query<FilaAsignacion[]>(
+      `
+      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.rol_asignado,
+             r.id AS reporte_id, r.uuid AS reporte_uuid, r.consecutivo, r.direccion, r.barrio, r.comuna,
+             r.tipo_edificacion, r.pisos_declarados, r.unidades_declaradas,
+             r.habitada, r.uso_declarado, r.descripcion, r.estado,
+             r.requiere_nivel_a, r.motivo_escalacion,
+             r.lat, r.lng,
+             f.uuid AS formulario_uuid, f.estado AS formulario_estado,
+             f.capturado_por AS capturado_por_id, f.capturado_en, f.firmado_en
+      FROM formularios_ais f
+      INNER JOIN reportes r ON r.id = f.reporte_id
+      LEFT JOIN asignaciones a ON a.reporte_id = r.id AND a.ingeniero_id = ?
+      WHERE f.capturado_por = ?
+        AND (
+          f.estado IN ('capturado', 'firmado')
+          OR EXISTS (
+            SELECT 1 FROM asignaciones ax
+            WHERE ax.reporte_id = r.id AND ax.ingeniero_id = ?
+              AND (ax.cerrada_en IS NOT NULL OR ax.liberada_en IS NOT NULL)
+          )
+        )
+      ORDER BY COALESCE(f.firmado_en, f.capturado_en, f.creado_en) DESC
+      LIMIT 100
+      `,
+      [usuario.id, usuario.id, usuario.id],
+    );
 
-    for (const fila of filas) {
+    const fotos: Record<string, Array<{ uuid: string; categoria: string; piso: string | null; origen: string }>> = {};
+    const reporteIds = new Set<string>();
+
+    for (const fila of [...activas, ...historial]) {
+      reporteIds.add(fila.reporte_id);
+    }
+
+    for (const reporteId of reporteIds) {
+      const fila = [...activas, ...historial].find((f) => f.reporte_id === reporteId);
+      if (!fila) continue;
       const lista = await this.fotosRepo.find({
-        where: { reporteId: fila.reporte_id },
+        where: { reporteId },
         order: { categoria: 'ASC', orden: 'ASC' },
         select: ['uuid', 'categoria', 'piso', 'origen'],
       });
@@ -110,9 +151,17 @@ export class CampoService {
       }));
     }
 
-    return {
-      asignaciones: filas.map((fila) => ({
-        asignacion_id: Number(fila.asignacion_id),
+    const mapear = (fila: FilaAsignacion) => {
+      const asignacionActiva = fila.cerrada_en === null && fila.liberada_en === null;
+      const editable =
+        fila.formulario_estado !== EstadoFormulario.FIRMADO &&
+        (asignacionActiva ||
+          (fila.formulario_estado === EstadoFormulario.CAPTURADO &&
+            fila.estado === EstadoReporte.EN_REVISION_A &&
+            String(fila.capturado_por_id) === String(usuario.id)));
+
+      return {
+        asignacion_id: fila.asignacion_id ? Number(fila.asignacion_id) : null,
         vence_en: fila.vence_en,
         rol_asignado: fila.rol_asignado,
         reporte_uuid: fila.reporte_uuid,
@@ -133,7 +182,16 @@ export class CampoService {
         lng: Number(fila.lng),
         formulario_uuid: fila.formulario_uuid,
         formulario_estado: fila.formulario_estado,
-      })),
+        capturado_en: fila.capturado_en,
+        firmado_en: fila.firmado_en,
+        activa: asignacionActiva,
+        editable,
+      };
+    };
+
+    return {
+      activas: activas.map(mapear),
+      historial: historial.map(mapear),
       fotos,
     };
   }
@@ -155,6 +213,8 @@ export class CampoService {
       });
     }
 
+    const previo = await this.formulariosRepo.findOne({ where: { uuid: dto.uuid } });
+
     const asignacion = await this.asignacionesRepo.findOne({
       where: {
         reporteId: reporte.id,
@@ -163,14 +223,25 @@ export class CampoService {
         liberadaEn: IsNull(),
       },
     });
-    if (!asignacion) {
+
+    const puedeEditarCapturaEnRevision =
+      previo?.capturadoPorId === String(usuario.id) &&
+      previo.estado === EstadoFormulario.CAPTURADO &&
+      reporte.estado === EstadoReporte.EN_REVISION_A;
+
+    if (!asignacion && !puedeEditarCapturaEnRevision) {
       throw new ForbiddenException({
         error: 'sin_asignacion',
         mensaje: 'No tienes una asignación activa sobre este reporte.',
       });
     }
 
-    const previo = await this.formulariosRepo.findOne({ where: { uuid: dto.uuid } });
+    if (dto.estado === EstadoFormulario.CAPTURADO && !previo?.capturadoEn && !asignacion) {
+      throw new ForbiddenException({
+        error: 'sin_asignacion',
+        mensaje: 'Solo puedes cerrar la captura con una asignación activa.',
+      });
+    }
     if (previo?.estado === EstadoFormulario.FIRMADO) {
       throw new ConflictException({
         error: 'firmado_inmutable',
@@ -205,7 +276,9 @@ export class CampoService {
       });
     }
 
-    const cerrando = dto.estado === EstadoFormulario.CAPTURADO;
+    const cerrando =
+      dto.estado === EstadoFormulario.CAPTURADO &&
+      previo?.estado !== EstadoFormulario.CAPTURADO;
     const danosJson = dto.danos as DanoAis[] | undefined;
     const estadoReporteInicial = reporte.estado;
 
@@ -286,7 +359,7 @@ export class CampoService {
     return { ok: true, uuid: dto.uuid, estado: dto.estado };
   }
 
-  async colaRevision() {
+  async colaRevision(_usuarioUuid: string) {
     const filas = await this.dataSource.query<
       {
         reporte_uuid: string;
@@ -316,20 +389,68 @@ export class CampoService {
       `,
     );
 
+    const historialFilas = await this.dataSource.query<
+      {
+        reporte_uuid: string;
+        consecutivo: string;
+        direccion: string;
+        barrio: string | null;
+        comuna: string | null;
+        requiere_nivel_a: number;
+        motivo_escalacion: string[] | null;
+        formulario_uuid: string;
+        capturado_en: Date;
+        visita_presencial_b: number | null;
+        capturado_por_nombre: string | null;
+        capturado_por_matricula: string | null;
+        firmado_en: Date;
+        firmado_por_nombre: string | null;
+        firmado_por_matricula: string | null;
+        habitabilidad_final: string | null;
+      }[]
+    >(
+      `
+      SELECT r.uuid AS reporte_uuid, r.consecutivo, r.direccion, r.barrio, r.comuna,
+             r.requiere_nivel_a, r.motivo_escalacion,
+             f.uuid AS formulario_uuid, f.capturado_en, f.visita_presencial_b,
+             uc.nombre AS capturado_por_nombre, uc.matricula AS capturado_por_matricula,
+             f.firmado_en, uf.nombre AS firmado_por_nombre, uf.matricula AS firmado_por_matricula,
+             f.habitabilidad_final
+      FROM formularios_ais f
+      INNER JOIN reportes r ON r.id = f.reporte_id
+      LEFT JOIN usuarios uc ON uc.id = f.capturado_por
+      LEFT JOIN usuarios uf ON uf.id = f.firmado_por
+      WHERE f.estado = 'firmado'
+      ORDER BY f.firmado_en DESC
+      LIMIT 100
+      `,
+    );
+
+    const mapearPendiente = (fila: (typeof filas)[number]) => ({
+      reporte_uuid: fila.reporte_uuid,
+      consecutivo: fila.consecutivo,
+      direccion: fila.direccion,
+      barrio: fila.barrio,
+      comuna: fila.comuna,
+      requiere_nivel_a: Boolean(fila.requiere_nivel_a),
+      motivo_escalacion: fila.motivo_escalacion ?? [],
+      formulario_uuid: fila.formulario_uuid,
+      capturado_en: fila.capturado_en,
+      visita_presencial_b: Boolean(fila.visita_presencial_b),
+      capturado_por_nombre: fila.capturado_por_nombre,
+      capturado_por_matricula: fila.capturado_por_matricula,
+      editable: true,
+    });
+
     return {
-      pendientes: filas.map((fila) => ({
-        reporte_uuid: fila.reporte_uuid,
-        consecutivo: fila.consecutivo,
-        direccion: fila.direccion,
-        barrio: fila.barrio,
-        comuna: fila.comuna,
-        requiere_nivel_a: Boolean(fila.requiere_nivel_a),
-        motivo_escalacion: fila.motivo_escalacion ?? [],
-        formulario_uuid: fila.formulario_uuid,
-        capturado_en: fila.capturado_en,
-        visita_presencial_b: Boolean(fila.visita_presencial_b),
-        capturado_por_nombre: fila.capturado_por_nombre,
-        capturado_por_matricula: fila.capturado_por_matricula,
+      pendientes: filas.map(mapearPendiente),
+      historial: historialFilas.map((fila) => ({
+        ...mapearPendiente(fila),
+        firmado_en: fila.firmado_en,
+        firmado_por_nombre: fila.firmado_por_nombre,
+        firmado_por_matricula: fila.firmado_por_matricula,
+        habitabilidad_final: fila.habitabilidad_final,
+        editable: false,
       })),
     };
   }
@@ -405,6 +526,12 @@ export class CampoService {
         firmado_por_nombre: formulario.firmadoPor?.nombre ?? null,
         firmado_por_matricula: formulario.firmadoPor?.matricula ?? null,
         habitabilidad_final: formulario.habitabilidadFinal,
+        habitabilidad_sugerida: formulario.habitabilidadSugerida,
+        riesgo_estabilidad: formulario.riesgoEstabilidad,
+        riesgo_geotecnico: formulario.riesgoGeotecnico,
+        riesgo_estructural: formulario.riesgoEstructural,
+        riesgo_no_estructural: formulario.riesgoNoEstructural,
+        motivo_discrepancia: formulario.motivoDiscrepancia,
         firmado_en: formulario.firmadoEn,
         numero_formulario: `F-${formulario.uuid.slice(0, 8).toUpperCase()}`,
       },
