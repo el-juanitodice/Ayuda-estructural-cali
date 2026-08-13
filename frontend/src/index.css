@@ -113,6 +113,8 @@
   }
 
   .site-header,
+  .site-sidebar,
+  .site-sidebar-mobile,
   .site-footer,
   .no-imprimir {
     display: none !important;

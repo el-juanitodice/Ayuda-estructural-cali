@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { AppLayout } from '@/components/layout/AppLayout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
+import { StaffLayout } from '@/components/layout/StaffLayout';
 import { ConsultReportProvider } from '@/contexts/ConsultReportContext';
 import { routes } from '@/constants/routes';
 import { AdminPage } from '@/pages/AdminPage';
@@ -30,40 +31,42 @@ export default function App() {
   return (
     <ConsultReportProvider>
       <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<MapPage />} />
-        <Route path="reportar" element={<ReportPage />} />
-        <Route path="estado" element={<StatusPage />} />
-        <Route path="ingreso" element={<LoginRoute />} />
-        <Route path="definir-clave" element={<SetPasswordRoute />} />
-        <Route path="recuperar-clave" element={<SetPasswordRoute />} />
-
-        <Route element={<ProtectedRoute roles={['ingeniero_a', 'ingeniero_b']} />}>
-          <Route path="campo" element={<FieldPage />} />
+        <Route element={<PublicLayout />}>
+          <Route index element={<MapPage />} />
+          <Route path="reportar" element={<ReportPage />} />
+          <Route path="estado" element={<StatusPage />} />
+          <Route path="ingreso" element={<LoginRoute />} />
+          <Route path="definir-clave" element={<SetPasswordRoute />} />
+          <Route path="recuperar-clave" element={<SetPasswordRoute />} />
         </Route>
 
-        <Route element={<ProtectedRoute roles={['ingeniero_a']} />}>
-          <Route path="revision" element={<ReviewPage />} />
-        </Route>
+        <Route element={<StaffLayout />}>
+          <Route element={<ProtectedRoute roles={['ingeniero_a', 'ingeniero_b']} />}>
+            <Route path="campo" element={<FieldPage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="aviso" element={<NoticePage />} />
-        </Route>
+          <Route element={<ProtectedRoute roles={['ingeniero_a']} />}>
+            <Route path="revision" element={<ReviewPage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute roles={['moderador', 'admin']} />}>
-          <Route path="moderacion" element={<ModerationPage />} />
-        </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route path="aviso" element={<NoticePage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute roles={['coordinador', 'admin']} />}>
-          <Route path="tablero" element={<DashboardPage />} />
-        </Route>
+          <Route element={<ProtectedRoute roles={['moderador', 'admin']} />}>
+            <Route path="moderacion" element={<ModerationPage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute roles={['admin']} />}>
-          <Route path="admin" element={<AdminPage />} />
+          <Route element={<ProtectedRoute roles={['coordinador', 'admin']} />}>
+            <Route path="tablero" element={<DashboardPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={['admin']} />}>
+            <Route path="admin" element={<AdminPage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to={routes.home} replace />} />
-      </Route>
       </Routes>
     </ConsultReportProvider>
   );

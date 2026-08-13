@@ -9,35 +9,55 @@ import { routes } from '@/constants/routes';
 import { cn } from '@/lib/utils';
 import type { Rol } from '@/types/auth';
 
+const ETIQUETA_ROL: Record<Rol, string> = {
+  admin: 'Administrador',
+  coordinador: 'Coordinador',
+  moderador: 'Moderador',
+  ingeniero_a: 'Ingeniero nivel A',
+  ingeniero_b: 'Ingeniero nivel B',
+};
+
 function tieneRol(rol: Rol, permitidos: Rol[]) {
   return permitidos.includes(rol);
 }
-
-const navLinkClass =
-  'text-primary-foreground hover:bg-white/10 hover:text-primary-foreground';
 
 interface NavItem {
   key: string;
   label: string;
   to?: string;
   onClick?: () => void;
-  icon?: React.ReactNode;
-  /** CTA destacado (p. ej. Ingresar) */
-  destacado?: boolean;
 }
 
-function useNavItems(onAfterAction?: () => void): NavItem[] {
-  const { usuario, salir } = useAuth();
+function usePublicNavItems(onAfterAction?: () => void): NavItem[] {
   const { abrirConsulta } = useConsultReport();
-  const navigate = useNavigate();
+
+  const cerrar = () => onAfterAction?.();
+
+  return [
+    { key: 'reportar', label: 'Reportar', to: routes.reportar },
+    {
+      key: 'consultar',
+      label: 'Consultar radicado',
+      onClick: () => {
+        abrirConsulta();
+        cerrar();
+      },
+    },
+  ];
+}
+
+function useStaffNavItems(onAfterAction?: () => void): NavItem[] {
+  const { usuario } = useAuth();
+  const { abrirConsulta } = useConsultReport();
 
   const cerrar = () => onAfterAction?.();
 
   const items: NavItem[] = [
+    { key: 'mapa', label: 'Mapa', to: routes.home },
     { key: 'reportar', label: 'Reportar', to: routes.reportar },
     {
       key: 'consultar',
-      label: 'Consultar',
+      label: 'Consultar radicado',
       onClick: () => {
         abrirConsulta();
         cerrar();
@@ -59,180 +79,277 @@ function useNavItems(onAfterAction?: () => void): NavItem[] {
       items.push({ key: 'tablero', label: 'Tablero', to: routes.tablero });
     }
     if (usuario.rol === 'admin') {
-      items.push({ key: 'admin', label: 'Admin', to: routes.admin });
+      items.push({ key: 'admin', label: 'Administración', to: routes.admin });
     }
-    items.push({
-      key: 'salir',
-      label: 'Salir',
-      icon: <LogOut className="size-4" />,
-      onClick: () => {
-        salir();
-        navigate(routes.home);
-        cerrar();
-      },
-    });
-  } else {
-    items.push({
-      key: 'ingreso',
-      label: 'Ingresar',
-      to: routes.ingreso,
-      icon: <LogIn className="size-4" />,
-      destacado: true,
-    });
   }
 
   return items;
 }
 
-function NavLink({
-  item,
-  modo,
+function HeaderNav({
+  items,
   onNavigate,
+  className,
 }: {
-  item: NavItem;
-  modo: 'desktop' | 'mobile';
+  items: NavItem[];
   onNavigate?: () => void;
+  className?: string;
 }) {
   const location = useLocation();
-  const activo = item.to != null && location.pathname === item.to;
-
-  const className =
-    modo === 'mobile'
-      ? cn(
-          'h-11 w-full justify-start gap-3 rounded-md px-3 text-base font-medium',
-          item.destacado
-            ? 'bg-white text-primary shadow-sm hover:bg-white/90 hover:text-primary'
-            : cn(
-                'text-primary-foreground hover:bg-white/10 hover:text-primary-foreground',
-                'focus-visible:ring-white/30',
-                activo && 'bg-white/15 font-semibold',
-              ),
-        )
-      : cn(item.destacado ? '' : navLinkClass, !item.destacado && activo && 'bg-white/15');
-
-  const variant = item.destacado && modo === 'desktop' ? 'secondary' : 'ghost';
-
-  const contenido = (
-    <>
-      {item.icon}
-      {item.label}
-    </>
-  );
-
-  if (item.to) {
-    return (
-      <Button
-        variant={variant}
-        size={modo === 'mobile' ? 'default' : 'sm'}
-        className={className}
-        asChild
-        onClick={onNavigate}
-      >
-        <Link to={item.to}>{contenido}</Link>
-      </Button>
-    );
-  }
 
   return (
-    <Button
-      variant={variant}
-      size={modo === 'mobile' ? 'default' : 'sm'}
-      type="button"
-      className={className}
-      onClick={item.onClick}
-    >
-      {contenido}
-    </Button>
-  );
-}
+    <nav className={cn('flex items-center gap-1', className)}>
+      {items.map((item) => {
+        const activo = item.to != null && location.pathname === item.to;
+        const className = cn(
+          'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          activo
+            ? 'bg-white/15 text-primary-foreground'
+            : 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground',
+        );
 
-function DesktopNav({ items }: { items: NavItem[] }) {
-  return (
-    <nav className="hidden items-center gap-1 text-sm md:flex">
-      {items.map((item) => (
-        <NavLink key={item.key} item={item} modo="desktop" />
-      ))}
+        if (item.to) {
+          return (
+            <Link key={item.key} to={item.to} className={className} onClick={onNavigate}>
+              {item.label}
+            </Link>
+          );
+        }
+
+        return (
+          <button key={item.key} type="button" className={className} onClick={item.onClick}>
+            {item.label}
+          </button>
+        );
+      })}
     </nav>
   );
 }
 
-function MobileNav({
+function SidebarNav({
   items,
-  abierto,
-  onAbiertoChange,
+  onNavigate,
+  className,
 }: {
   items: NavItem[];
-  abierto: boolean;
-  onAbiertoChange: (open: boolean) => void;
+  onNavigate?: () => void;
+  className?: string;
 }) {
+  const location = useLocation();
+
   return (
-    <Sheet open={abierto} onOpenChange={onAbiertoChange}>
-      <SheetTrigger asChild>
+    <nav className={cn('flex flex-col gap-0.5', className)}>
+      {items.map((item) => {
+        const activo = item.to != null && location.pathname === item.to;
+        const className = cn(
+          'flex h-10 w-full items-center rounded-md px-3 text-sm font-medium transition-colors',
+          activo
+            ? 'bg-white/15 text-primary-foreground'
+            : 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground',
+        );
+
+        if (item.to) {
+          return (
+            <Link key={item.key} to={item.to} className={className} onClick={onNavigate}>
+              {item.label}
+            </Link>
+          );
+        }
+
+        return (
+          <button key={item.key} type="button" className={className} onClick={item.onClick}>
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function SidebarUsuario({ onAfterAction }: { onAfterAction?: () => void }) {
+  const { usuario, salir } = useAuth();
+  const navigate = useNavigate();
+
+  const cerrar = () => onAfterAction?.();
+
+  if (!usuario) {
+    return (
+      <div className="border-t border-white/10 p-4">
         <Button
-          variant="ghost"
-          size="icon"
-          className={cn(navLinkClass, 'md:hidden')}
-          aria-label="Abrir menú"
+          className="w-full gap-2 bg-white text-primary hover:bg-white/90"
+          asChild
+          onClick={cerrar}
         >
-          <Menu className="size-5" />
+          <Link to={routes.ingreso}>
+            <LogIn className="size-4" />
+            Ingresar
+          </Link>
         </Button>
-      </SheetTrigger>
-      <SheetContent
-        side="right"
-        className="flex flex-col border-primary/20 bg-primary text-primary-foreground [&>button]:text-primary-foreground [&>button]:hover:bg-white/10"
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-white/10 p-4">
+      <div className="mb-3 min-w-0">
+        <p className="truncate font-semibold leading-tight">{usuario.nombre}</p>
+        <p className="mt-0.5 text-xs font-medium text-primary-foreground/80">
+          {ETIQUETA_ROL[usuario.rol]}
+        </p>
+        <p className="mt-1 truncate text-xs text-primary-foreground/55">{usuario.email}</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+        onClick={() => {
+          salir();
+          navigate(routes.home);
+          cerrar();
+        }}
       >
-        <SheetHeader className="border-b border-white/10 pb-4 text-left">
-          <SheetTitle className="flex items-center gap-2 text-primary-foreground">
-            <HardHat className="size-5" />
-            Menú
-          </SheetTitle>
-        </SheetHeader>
-        <nav className="mt-4 flex flex-col gap-1">
-          {items
-            .filter((item) => !item.destacado)
-            .map((item) => (
-              <NavLink
-                key={item.key}
-                item={item}
-                modo="mobile"
-                onNavigate={() => onAbiertoChange(false)}
-              />
-            ))}
-        </nav>
-        {items.some((item) => item.destacado) && (
-          <div className="mt-auto border-t border-white/10 pt-4">
-            {items
-              .filter((item) => item.destacado)
-              .map((item) => (
-                <NavLink
-                  key={item.key}
-                  item={item}
-                  modo="mobile"
-                  onNavigate={() => onAbiertoChange(false)}
-                />
-              ))}
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
+        <LogOut className="size-4" />
+        Cerrar sesión
+      </Button>
+    </div>
+  );
+}
+
+function SidebarPanel({ onAfterAction, className }: { onAfterAction?: () => void; className?: string }) {
+  const items = useStaffNavItems(onAfterAction);
+
+  return (
+    <div className={cn('flex h-full flex-col bg-primary text-primary-foreground', className)}>
+      <div className="border-b border-white/10 p-4">
+        <Link
+          to={routes.home}
+          className="flex items-center gap-2 font-semibold"
+          onClick={onAfterAction}
+        >
+          <HardHat className="size-5 shrink-0" />
+          <span>Inspección Cali</span>
+        </Link>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        <SidebarNav items={items} onNavigate={onAfterAction} />
+      </div>
+
+      <SidebarUsuario onAfterAction={onAfterAction} />
+    </div>
   );
 }
 
 export function SiteHeader() {
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const items = useNavItems(() => setMenuAbierto(false));
+  const [abierto, setAbierto] = useState(false);
+  const items = usePublicNavItems(() => setAbierto(false));
 
   return (
-    <header className="site-header sticky top-0 z-50 shrink-0 border-b bg-primary text-primary-foreground shadow-sm print:hidden">
-      <div className="flex w-full items-center justify-between gap-3 px-4 py-3">
+    <header className="site-header sticky top-0 z-40 shrink-0 border-b bg-primary text-primary-foreground print:hidden">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
         <Link to={routes.home} className="flex min-w-0 items-center gap-2 font-semibold">
           <HardHat className="size-5 shrink-0" />
           <span className="truncate">Inspección Cali</span>
         </Link>
 
-        <DesktopNav items={items} />
-        <MobileNav items={items} abierto={menuAbierto} onAbiertoChange={setMenuAbierto} />
+        <div className="hidden flex-1 items-center justify-end gap-2 md:flex">
+          <HeaderNav items={items} />
+          <Button
+            className="ml-2 gap-2 bg-white text-primary hover:bg-white/90"
+            size="sm"
+            asChild
+          >
+            <Link to={routes.ingreso}>
+              <LogIn className="size-4" />
+              Ingresar
+            </Link>
+          </Button>
+        </div>
+
+        <div className="ml-auto md:hidden">
+          <Sheet open={abierto} onOpenChange={setAbierto}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+                aria-label="Abrir menú"
+              >
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[min(100vw-2rem,18rem)] border-0 bg-primary p-0 text-primary-foreground shadow-xl [&>button]:text-primary-foreground [&>button]:hover:bg-white/10"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Menú de navegación</SheetTitle>
+              </SheetHeader>
+              <div className="flex h-full flex-col bg-primary text-primary-foreground">
+                <div className="flex-1 p-4">
+                  <HeaderNav items={items} onNavigate={() => setAbierto(false)} className="flex-col items-stretch gap-1" />
+                </div>
+                <div className="border-t border-white/10 p-4">
+                  <Button
+                    className="w-full gap-2 bg-white text-primary hover:bg-white/90"
+                    asChild
+                    onClick={() => setAbierto(false)}
+                  >
+                    <Link to={routes.ingreso}>
+                      <LogIn className="size-4" />
+                      Ingresar
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
+    </header>
+  );
+}
+
+export function SiteSidebar() {
+  return (
+    <aside className="site-sidebar hidden w-64 shrink-0 md:block print:hidden">
+      <div className="sticky top-0 h-svh">
+        <SidebarPanel className="h-full" />
+      </div>
+    </aside>
+  );
+}
+
+export function SiteMobileBar() {
+  const [abierto, setAbierto] = useState(false);
+
+  return (
+    <header className="site-sidebar-mobile flex shrink-0 items-center gap-3 border-b bg-primary px-4 py-3 text-primary-foreground md:hidden print:hidden">
+      <Sheet open={abierto} onOpenChange={setAbierto}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+            aria-label="Abrir menú"
+          >
+            <Menu className="size-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="w-[min(100vw-2rem,18rem)] border-0 bg-primary p-0 text-primary-foreground shadow-xl [&>button]:text-primary-foreground [&>button]:hover:bg-white/10"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Menú de navegación</SheetTitle>
+          </SheetHeader>
+          <SidebarPanel onAfterAction={() => setAbierto(false)} className="h-full" />
+        </SheetContent>
+      </Sheet>
+      <Link to={routes.home} className="flex min-w-0 items-center gap-2 font-semibold">
+        <HardHat className="size-5 shrink-0" />
+        <span className="truncate">Inspección Cali</span>
+      </Link>
     </header>
   );
 }
