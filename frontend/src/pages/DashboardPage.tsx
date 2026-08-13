@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Download, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,8 +72,11 @@ export function DashboardPage() {
     try {
       const hoy = new Date().toISOString().slice(0, 10);
       await descargarArchivo('/tablero/exportar?formato=csv', `inspecciones_${hoy}.csv`);
+      toast.success('CSV exportado', { description: `inspecciones_${hoy}.csv` });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo exportar');
+      const msg = e instanceof Error ? e.message : 'No se pudo exportar';
+      setError(msg);
+      toast.error('No se pudo exportar', { description: msg });
     } finally {
       setExportando(false);
     }

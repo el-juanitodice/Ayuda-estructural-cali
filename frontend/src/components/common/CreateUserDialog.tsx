@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 import { esRolIngeniero, RolSelect } from '@/components/common/RolSelect';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,7 +70,9 @@ export function CreateUserDialog({ open, onOpenChange, onCreado }: CreateUserDia
       onCreado(r);
       cerrar();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
+      const msg = err instanceof Error ? err.message : 'No se pudo crear la cuenta';
+      setError(msg);
+      toast.error('No se pudo crear la cuenta', { description: msg });
     } finally {
       setEnviando(false);
     }

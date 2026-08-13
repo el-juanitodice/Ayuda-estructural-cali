@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { SISTEMAS_ESTRUCTURALES, elementosEstructurales } from '@shared/ais.js';
 import { DamageMatrix } from '@/components/campo/DamageMatrix';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
@@ -76,7 +77,6 @@ export function FieldCaptureForm({
   const [form, setForm] = useState<FormularioCampoPayload | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
@@ -123,9 +123,13 @@ export function FieldCaptureForm({
       if (!silencioso) setGuardando(true);
       try {
         await post<GuardarFormularioResponse>('/campo/formularios', payload);
-        if (!silencioso) setMensaje('Borrador guardado.');
+        if (!silencioso) toast.success('Borrador guardado');
       } catch (e) {
-        if (!silencioso) setError(e instanceof Error ? e.message : 'No se pudo guardar');
+        const msg = e instanceof Error ? e.message : 'No se pudo guardar';
+        if (!silencioso) {
+          setError(msg);
+          toast.error('No se pudo guardar', { description: msg });
+        }
       } finally {
         if (!silencioso) setGuardando(false);
       }
@@ -172,10 +176,14 @@ export function FieldCaptureForm({
         ...form,
         estado: 'capturado',
       });
-      setMensaje('Captura cerrada. Pasa a revisión de nivel A.');
+      toast.success('Captura enviada a revisión', {
+        description: `${asignacion.consecutivo} — un ingeniero nivel A firmará el dictamen.`,
+      });
       onCerrado();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo cerrar la captura');
+      const msg = e instanceof Error ? e.message : 'No se pudo cerrar la captura';
+      setError(msg);
+      toast.error('No se pudo enviar a revisión', { description: msg });
     } finally {
       setGuardando(false);
     }
@@ -397,11 +405,6 @@ export function FieldCaptureForm({
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      {mensaje && (
-        <Alert>
-          <AlertDescription>{mensaje}</AlertDescription>
         </Alert>
       )}
 

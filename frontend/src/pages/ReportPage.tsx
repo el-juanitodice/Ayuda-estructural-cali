@@ -73,13 +73,16 @@ export function ReportPage() {
   const enviarReporte = async (datos: ReporteForm, yaReconocioEmergencia = false) => {
     setError(null);
     if (!ubicacion) {
-      setError('Marca la ubicación del predio en el mapa.');
+      const msg = 'Marca la ubicación del predio en el mapa.';
+      setError(msg);
+      toast.error(msg);
       return;
     }
     if (!gpsEnAreaCali(ubicacion.lat, ubicacion.lng)) {
-      setError(
-        'La ubicación está fuera del área de Cali. Coloca el marcador sobre el predio dentro de Cali.',
-      );
+      const msg =
+        'La ubicación está fuera del área de Cali. Coloca el marcador sobre el predio dentro de Cali.';
+      setError(msg);
+      toast.error(msg);
       return;
     }
     if (esEmergencia() && !yaReconocioEmergencia) {
@@ -112,7 +115,9 @@ export function ReportPage() {
         setModalEmergencia(true);
         return;
       }
-      setError(e instanceof Error ? e.message : 'No se pudo enviar el reporte');
+      const msg = e instanceof Error ? e.message : 'No se pudo enviar el reporte';
+      setError(msg);
+      toast.error('No se pudo enviar el reporte', { description: msg });
     } finally {
       setEnviando(false);
     }

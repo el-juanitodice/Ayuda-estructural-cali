@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,8 +35,13 @@ export function SetPasswordPage({ token }: SetPasswordPageProps) {
     setError(null);
     try {
       await post('/auth/definir-clave', { token, clave: datos.clave });
+      toast.success('Contraseña establecida', {
+        description: 'Ya puedes ingresar con tu correo y la nueva contraseña.',
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar la contraseña');
+      const msg = e instanceof Error ? e.message : 'No se pudo guardar la contraseña';
+      setError(msg);
+      toast.error('No se pudo guardar la contraseña', { description: msg });
       throw e;
     }
   };

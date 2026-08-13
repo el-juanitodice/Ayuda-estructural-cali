@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 import { CreateUserDialog } from '@/components/common/CreateUserDialog';
 import { UsersList } from '@/components/common/UsersList';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,6 @@ import type { CrearUsuarioResponse, ListarUsuariosResponse } from '@/types/admin
 export function AdminPage() {
   const [usuarios, setUsuarios] = useState<ListarUsuariosResponse['usuarios']>([]);
   const [dialogAbierto, setDialogAbierto] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
@@ -32,21 +32,17 @@ export function AdminPage() {
   }, [cargar]);
 
   const onCreado = (respuesta: CrearUsuarioResponse) => {
-    let texto = respuesta.mensaje;
-    if (respuesta.enlace_alta) {
-      texto += ` Enlace dev: ${respuesta.enlace_alta}`;
-    }
-    setMensaje(texto);
+    toast.success('Cuenta creada', {
+      description: respuesta.enlace_alta
+        ? `${respuesta.mensaje} Enlace dev: ${respuesta.enlace_alta}`
+        : respuesta.mensaje,
+      duration: respuesta.enlace_alta ? 15000 : 8000,
+    });
     void cargar();
   };
 
   return (
     <div className="w-full space-y-3">
-      {mensaje && (
-        <p className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
-          {mensaje}
-        </p>
-      )}
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
       <Card>

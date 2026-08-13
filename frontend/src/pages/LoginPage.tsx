@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,7 +47,9 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
       entrar(r.usuario, r.accessToken);
       navigate(redirectTo || destinoTrasLogin(r.usuario), { replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo iniciar sesión');
+      const msg = e instanceof Error ? e.message : 'No se pudo iniciar sesión';
+      setError(msg);
+      toast.error('No se pudo iniciar sesión', { description: msg });
     }
   };
 
@@ -54,11 +57,14 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
     const email = getValues('email');
     if (!email) {
       setError('Escribe tu correo primero.');
+      toast.error('Escribe tu correo primero');
       return;
     }
     setError(null);
     await post('/auth/recuperar', { email }).catch(() => {});
-    setInfo('Si el correo existe, te llegará un enlace de recuperación.');
+    const msg = 'Si el correo existe, te llegará un enlace de recuperación.';
+    setInfo(msg);
+    toast.info('Solicitud enviada', { description: msg });
   };
 
   return (

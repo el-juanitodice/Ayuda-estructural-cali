@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ClipboardCheck, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   ETIQUETA_HABITABILIDAD,
   HABITABILIDAD,
@@ -139,9 +140,14 @@ function DetalleRevision({
         visita_presencial: visita,
       });
       setResultado(r);
+      toast.success('Dictamen firmado', {
+        description: `${item.consecutivo} — ${ETIQUETA_HABITABILIDAD[r.habitabilidad_final]}`,
+      });
       onFirmado();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo firmar');
+      const msg = e instanceof Error ? e.message : 'No se pudo firmar';
+      setError(msg);
+      toast.error('No se pudo firmar el dictamen', { description: msg });
       setPidiendoClave(false);
     } finally {
       setClave('');

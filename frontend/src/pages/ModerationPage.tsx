@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Phone, ShieldAlert, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,14 @@ const ETIQUETA_ESTADO: Record<string, string> = {
 function formatearFecha(iso: string) {
   return new Date(iso).toLocaleString('es-CO');
 }
+
+const ETIQUETA_MOTIVO_DESCARTE: Record<MotivoDescarte, string> = {
+  duplicado: 'duplicado',
+  no_contesta: 'no contesta',
+  fuera_de_zona: 'fuera de zona',
+  spam: 'spam',
+  otro: 'otro',
+};
 
 function puedeAsignar(reporte: ReporteCola) {
   return reporte.estado === 'validado' || reporte.estado === 'vencido';
@@ -163,8 +172,13 @@ function DetalleReporte({
         notas_llamada: notas,
       });
       setResultado(r);
+      toast.success('Reporte validado', {
+        description: reporte.consecutivo ?? reporte.uuid,
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo validar');
+      const msg = e instanceof Error ? e.message : 'No se pudo validar';
+      setError(msg);
+      toast.error('No se pudo validar', { description: msg });
     } finally {
       setCargando(false);
     }
@@ -175,9 +189,14 @@ function DetalleReporte({
     setCargando(true);
     try {
       await post(`/moderacion/${reporte.uuid}/descartar`, { motivo });
+      toast.success('Reporte descartado', {
+        description: `${reporte.consecutivo ?? reporte.uuid} — ${ETIQUETA_MOTIVO_DESCARTE[motivo]}`,
+      });
       onActualizado();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo descartar');
+      const msg = e instanceof Error ? e.message : 'No se pudo descartar';
+      setError(msg);
+      toast.error('No se pudo descartar', { description: msg });
     } finally {
       setCargando(false);
     }
@@ -190,9 +209,17 @@ function DetalleReporte({
       await post(`/moderacion/${reporte.uuid}/asignar`, {
         ingeniero_id: Number(ingenieroId),
       });
+      const ingeniero = ingenieros.find((i) => String(i.id) === ingenieroId);
+      toast.success('Ingeniero asignado', {
+        description: ingeniero
+          ? `${reporte.consecutivo ?? reporte.uuid} → ${ingeniero.nombre}`
+          : (reporte.consecutivo ?? reporte.uuid),
+      });
       onActualizado();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo asignar');
+      const msg = e instanceof Error ? e.message : 'No se pudo asignar';
+      setError(msg);
+      toast.error('No se pudo asignar', { description: msg });
     } finally {
       setCargando(false);
     }
@@ -442,11 +469,16 @@ export function ModerationPage() {
     setError(null);
     try {
       await del(`/moderacion/${reporteAEliminar.uuid}`);
+      toast.success('Reporte eliminado', {
+        description: reporteAEliminar.consecutivo ?? reporteAEliminar.uuid,
+      });
       if (seleccionado?.uuid === reporteAEliminar.uuid) setSeleccionado(null);
       setReporteAEliminar(null);
       await cargarCola();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo eliminar');
+      const msg = e instanceof Error ? e.message : 'No se pudo eliminar';
+      setError(msg);
+      toast.error('No se pudo eliminar', { description: msg });
     } finally {
       setEliminandoUuid(null);
     }
