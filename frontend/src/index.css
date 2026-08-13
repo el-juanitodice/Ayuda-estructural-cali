@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 215 54% 23%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 215 54% 23%;
+    --radius: 0.625rem;
+    --chart-1: 142 76% 36%;
+    --chart-2: 45 93% 47%;
+    --chart-3: 24 95% 53%;
+    --chart-3: 0 72% 51%;
+    --chart-5: 215 16% 47%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Transición estándar app (200ms ease-in-out) — ver constants/motion.ts */
+  .app-transition {
+    @apply transition-all duration-app ease-app;
+  }
+
+  /* Leaflet panes usan z-index 400–1000; el contenedor queda por debajo de modales (z-[1100]) */
+  .leaflet-container {
+    z-index: 0;
+  }
+
+  /* Aviso imprimible (carta) */
+  .aviso-carta {
+    @apply mx-auto box-border max-w-[8.5in] border-[6px] border-neutral-900 bg-white px-[0.7in] py-[0.6in];
+  }
+
+  .aviso-titulo {
+    @apply m-0 text-center text-xl font-extrabold;
+  }
+
+  .aviso-sub {
+    @apply mb-3 mt-1 text-center text-neutral-600;
+  }
+
+  .aviso-color {
+    @apply rounded-xl px-2 py-6 text-center text-4xl font-black tracking-wide text-white;
+  }
+
+  .aviso-fondo-verde .aviso-color {
+    @apply bg-emerald-700;
+  }
+
+  .aviso-fondo-amarillo .aviso-color {
+    @apply bg-amber-500 text-neutral-900;
+  }
+
+  .aviso-fondo-naranja .aviso-color {
+    @apply bg-orange-600;
+  }
+
+  .aviso-fondo-rojo .aviso-color {
+    @apply bg-red-700;
+  }
+
+  .aviso-significado {
+    @apply my-4 text-lg font-semibold;
+  }
+
+  .aviso-datos {
+    @apply my-3 w-full border-collapse;
+  }
+
+  .aviso-datos td {
+    @apply border border-neutral-400 px-2.5 py-1.5;
+  }
+
+  .aviso-datos td:first-child {
+    @apply w-[34%] font-bold;
+  }
+
+  .aviso-pie {
+    @apply flex items-center gap-4 text-sm;
+  }
+
+  .aviso-qr {
+    @apply h-[130px] w-[130px] shrink-0;
+  }
+}
+
+@media print {
+  body {
+    @apply bg-white;
+  }
+
+  .site-header,
+  .site-footer,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .aviso-carta {
+    border-width: 8px;
+  }
+}

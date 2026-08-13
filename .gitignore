@@ -6,6 +6,8 @@
 # Dependencias y build
 node_modules/
 web/dist/
+frontend/dist/
+*.tsbuildinfo
 
 # Sistema
 .DS_Store

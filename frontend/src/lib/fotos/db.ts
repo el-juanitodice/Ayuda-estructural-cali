@@ -1,0 +1,44 @@
+import Dexie, { type EntityTable } from 'dexie';
+import type { ConteoCola } from '@/types/upload';
+
+export interface FilaColaFoto {
+  uuid: string;
+  reporte_uuid: string;
+  categoria: string;
+  piso: string | null;
+  estado: 'pendiente' | 'subiendo' | 'confirmada' | 'fallida';
+  full: Blob | null;
+  thumb: Blob | null;
+  ancho: number;
+  alto: number;
+  formato: 'webp' | 'jpeg';
+  bytes_full: number;
+  bytes_thumb: number;
+  exif: { lat?: number | null; lng?: number | null; tomada_en?: string | null } | null;
+  intentos: number;
+  proximo_intento: number;
+  ultimo_error: string | null;
+  creado_en: number;
+  confirmada_en?: number;
+}
+
+export const db = new Dexie('inspeccion-cali') as Dexie & {
+  cola_fotos: EntityTable<FilaColaFoto, 'uuid'>;
+};
+
+db.version(1).stores({
+  cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
+});
+
+const ESTADOS: FilaColaFoto['estado'][] = ['pendiente', 'subiendo', 'confirmada', 'fallida'];
+
+export async function sanearColaAlArrancar() {
+  await db.cola_fotos.where('estado').equals('subiendo').modify({ estado: 'pendiente' });
+}
+
+export async function contarPorEstado(): Promise<ConteoCola> {
+  const [pendiente, subiendo, confirmada, fallida] = await Promise.all(
+    ESTADOS.map((e) => db.cola_fotos.where('estado').equals(e).count()),
+  );
+  return { pendiente, subiendo, confirmada, fallida };
+}

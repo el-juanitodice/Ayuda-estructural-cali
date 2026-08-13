@@ -9,12 +9,15 @@
   },
   "workspaces": [
     "api",
-    "web"
+    "web",
+    "frontend"
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "start": "npm run start --workspace api",
+    "frontend:dev": "npm run dev --workspace frontend",
+    "frontend:build": "npm run build --workspace frontend",
     "worker": "npm run worker --workspace api",
     "test": "node --test api/test/**/*.test.js shared/**/*.test.js",
     "db:schema": "psql $DATABASE_URL -f db/schema.sql",
