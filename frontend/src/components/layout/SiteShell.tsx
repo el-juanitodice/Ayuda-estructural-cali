@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HardHat, LogIn, LogOut, Menu } from 'lucide-react';
+import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
@@ -228,6 +229,7 @@ function SidebarPanel({ onAfterAction, className }: { onAfterAction?: () => void
         >
           <HardHat className="size-5 shrink-0" />
           <span>Inspección Cali</span>
+          <SyncQueueBadge className="ml-auto" />
         </Link>
       </div>
 
@@ -359,10 +361,11 @@ export function SiteMobileBar() {
           <SidebarPanel onAfterAction={() => setAbierto(false)} className="h-full" />
         </SheetContent>
       </Sheet>
-      <Link to={routes.home} className="flex min-w-0 items-center gap-2 font-semibold">
+      <Link to={routes.home} className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
         <HardHat className="size-5 shrink-0" />
         <span className="truncate">Inspección Cali</span>
       </Link>
+      <SyncQueueBadge />
     </header>
   );
 }

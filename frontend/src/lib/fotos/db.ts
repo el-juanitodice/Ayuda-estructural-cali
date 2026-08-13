@@ -1,4 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
+import type { AsignacionCampo } from '@/types/campo';
+import type { FormularioCampoPayload } from '@/types/campo';
 import type { ConteoCola } from '@/types/upload';
 
 export interface FilaColaFoto {
@@ -22,12 +24,30 @@ export interface FilaColaFoto {
   confirmada_en?: number;
 }
 
+export interface FormularioLocal extends FormularioCampoPayload {
+  pendiente: 0 | 1;
+  guardado_en: number;
+  error_sync?: string;
+}
+
+export interface AsignacionLocal extends AsignacionCampo {
+  fotos: Array<{ uuid: string; categoria: string; piso: string | null; origen: string }>;
+}
+
 export const db = new Dexie('inspeccion-cali') as Dexie & {
   cola_fotos: EntityTable<FilaColaFoto, 'uuid'>;
+  formularios: EntityTable<FormularioLocal, 'uuid'>;
+  asignaciones: EntityTable<AsignacionLocal, 'reporte_uuid'>;
 };
 
 db.version(1).stores({
   cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
+});
+
+db.version(2).stores({
+  cola_fotos: 'uuid, reporte_uuid, estado, proximo_intento, creado_en',
+  asignaciones: 'reporte_uuid',
+  formularios: 'uuid, reporte_uuid, estado, pendiente',
 });
 
 const ESTADOS: FilaColaFoto['estado'][] = ['pendiente', 'subiendo', 'confirmada', 'fallida'];

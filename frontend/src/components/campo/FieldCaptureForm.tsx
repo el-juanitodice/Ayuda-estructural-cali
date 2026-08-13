@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { SISTEMAS_ESTRUCTURALES, elementosEstructurales } from '@shared/ais.js';
 import { DamageMatrix } from '@/components/campo/DamageMatrix';
@@ -18,12 +18,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { get, post } from '@/lib/api';
-import type {
-  AsignacionCampo,
-  FormularioCampoPayload,
-  GuardarFormularioResponse,
-} from '@/types/campo';
+import { get } from '@/lib/api';
+import {
+  cacheFormularioServidor,
+  cargarLocal,
+  formularioDeReporte,
+  guardarLocal,
+  payloadDesdeLocal,
+  sincronizarCampo,
+} from '@/lib/campo/sync';
+import type { AsignacionCampo, FormularioCampoPayload } from '@/types/campo';
 import type { DanoAis, FotoResumen, FormularioResponse } from '@/types/revision';
 
 function filasIniciales(sistema: number): DanoAis[] {
@@ -63,6 +67,27 @@ function formularioVacio(asignacion: AsignacionCampo, uuid: string): FormularioC
   };
 }
 
+function mapFormularioFromApi(r: FormularioResponse): FormularioCampoPayload {
+  const f = r.formulario;
+  return {
+    uuid: f.uuid,
+    reporte_uuid: f.reporte_uuid,
+    estado: f.estado as 'borrador' | 'capturado' | 'firmado',
+    visita_presencial_b: Boolean(f.visita_presencial_b),
+    sistema_estructural: f.sistema_estructural ?? 21,
+    colapso: f.colapso ?? 'ninguno',
+    inclinacion: f.inclinacion ?? 'ninguna',
+    asentamiento: f.asentamiento ?? 'ninguno',
+    falla_talud: f.falla_talud ?? 'ninguno',
+    pisos_sobre_terreno: f.pisos_sobre_terreno,
+    anio_construccion: f.anio_construccion ?? 2,
+    piso_mayor_dano: f.piso_mayor_dano ?? '',
+    porcentaje_dano: f.porcentaje_dano ?? 'ninguno',
+    comentarios: f.comentarios ?? '',
+    danos: r.danos.length ? r.danos : filasIniciales(f.sistema_estructural ?? 21),
+  };
+}
+
 export function FieldCaptureForm({
   asignacion,
   fotos,
@@ -78,36 +103,69 @@ export function FieldCaptureForm({
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [sinConexion, setSinConexion] = useState(
+    typeof navigator !== 'undefined' && !navigator.onLine,
+  );
+  const [pendienteSync, setPendienteSync] = useState(false);
   const debounceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const actualizarRed = () => setSinConexion(!navigator.onLine);
+    window.addEventListener('online', actualizarRed);
+    window.addEventListener('offline', actualizarRed);
+    return () => {
+      window.removeEventListener('online', actualizarRed);
+      window.removeEventListener('offline', actualizarRed);
+    };
+  }, []);
 
   useEffect(() => {
     const cargar = async () => {
       setCargando(true);
       setError(null);
       try {
-        if (asignacion.formulario_uuid) {
-          const r = await get<FormularioResponse>(`/campo/formularios/${asignacion.formulario_uuid}`);
-          const f = r.formulario;
-          setForm({
-            uuid: f.uuid,
-            reporte_uuid: f.reporte_uuid,
-            estado: f.estado as 'borrador' | 'capturado' | 'firmado',
-            visita_presencial_b: Boolean(f.visita_presencial_b),
-            sistema_estructural: f.sistema_estructural ?? 21,
-            colapso: f.colapso ?? 'ninguno',
-            inclinacion: f.inclinacion ?? 'ninguna',
-            asentamiento: f.asentamiento ?? 'ninguno',
-            falla_talud: f.falla_talud ?? 'ninguno',
-            pisos_sobre_terreno: f.pisos_sobre_terreno,
-            anio_construccion: f.anio_construccion ?? 2,
-            piso_mayor_dano: f.piso_mayor_dano ?? '',
-            porcentaje_dano: f.porcentaje_dano ?? 'ninguno',
-            comentarios: f.comentarios ?? '',
-            danos: r.danos.length ? r.danos : filasIniciales(f.sistema_estructural ?? 21),
-          });
-        } else {
-          setForm(formularioVacio(asignacion, crypto.randomUUID()));
+        const local = await formularioDeReporte(asignacion.reporte_uuid);
+
+        if (navigator.onLine && asignacion.formulario_uuid) {
+          try {
+            const r = await get<FormularioResponse>(
+              `/campo/formularios/${asignacion.formulario_uuid}`,
+            );
+            const desdeServidor = mapFormularioFromApi(r);
+            if (local?.pendiente === 1) {
+              setForm(payloadDesdeLocal(local));
+              setPendienteSync(true);
+            } else {
+              setForm(desdeServidor);
+              await cacheFormularioServidor(desdeServidor);
+              setPendienteSync(false);
+            }
+            return;
+          } catch {
+            // continuar con copia local si existe
+          }
         }
+
+        if (local) {
+          setForm(payloadDesdeLocal(local));
+          setPendienteSync(local.pendiente === 1);
+          return;
+        }
+
+        if (navigator.onLine && asignacion.formulario_uuid) {
+          const r = await get<FormularioResponse>(
+            `/campo/formularios/${asignacion.formulario_uuid}`,
+          );
+          const desdeServidor = mapFormularioFromApi(r);
+          setForm(desdeServidor);
+          await cacheFormularioServidor(desdeServidor);
+          setPendienteSync(false);
+          return;
+        }
+
+        const uuid = asignacion.formulario_uuid ?? crypto.randomUUID();
+        setForm(formularioVacio(asignacion, uuid));
+        setPendienteSync(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'No se pudo cargar el formulario');
       } finally {
@@ -117,14 +175,28 @@ export function FieldCaptureForm({
     cargar();
   }, [asignacion]);
 
-  const guardar = useCallback(
+  const persistir = useCallback(
     async (payload: FormularioCampoPayload, silencioso = false) => {
       if (!asignacion.editable) return;
-      if (payload.estado === 'capturado' || payload.estado === 'firmado') return;
+      if (payload.estado === 'firmado') return;
       if (!silencioso) setGuardando(true);
       try {
-        await post<GuardarFormularioResponse>('/campo/formularios', payload);
-        if (!silencioso) toast.success('Borrador guardado');
+        await guardarLocal(payload);
+        await sincronizarCampo();
+        const cached = await cargarLocal(payload.uuid);
+        const quedaPendiente = cached?.pendiente === 1;
+        setPendienteSync(quedaPendiente);
+        if (!silencioso) {
+          if (quedaPendiente) {
+            toast.info('Guardado en el dispositivo', {
+              description: 'Se sincronizará cuando haya señal.',
+            });
+          } else {
+            toast.success(
+              payload.estado === 'capturado' ? 'Captura actualizada' : 'Borrador guardado',
+            );
+          }
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'No se pudo guardar';
         if (!silencioso) {
@@ -138,33 +210,18 @@ export function FieldCaptureForm({
     [asignacion.editable],
   );
 
-  const guardarCaptura = useCallback(
-    async (payload: FormularioCampoPayload) => {
-      if (!asignacion.editable) return;
-      setGuardando(true);
-      try {
-        await post<GuardarFormularioResponse>('/campo/formularios', payload);
-        toast.success('Captura actualizada');
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'No se pudo guardar';
-        setError(msg);
-        toast.error('No se pudo guardar', { description: msg });
-      } finally {
-        setGuardando(false);
-      }
-    },
-    [asignacion.editable],
-  );
-
   const programarGuardado = useCallback(
     (payload: FormularioCampoPayload) => {
-      if (!asignacion.editable || payload.estado !== 'borrador') return;
+      if (!asignacion.editable || payload.estado === 'firmado') return;
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
       debounceRef.current = window.setTimeout(() => {
-        guardar(payload, true).catch(() => {});
+        void guardarLocal(payload).then(async () => {
+          const cached = await cargarLocal(payload.uuid);
+          setPendienteSync(cached?.pendiente === 1);
+        });
       }, 800);
     },
-    [guardar, asignacion.editable],
+    [asignacion.editable],
   );
 
   const actualizar = (parcial: Partial<FormularioCampoPayload>) => {
@@ -172,7 +229,10 @@ export function FieldCaptureForm({
     setForm((prev) => {
       if (!prev) return prev;
       let next = { ...prev, ...parcial };
-      if (parcial.sistema_estructural !== undefined && parcial.sistema_estructural !== prev.sistema_estructural) {
+      if (
+        parcial.sistema_estructural !== undefined &&
+        parcial.sistema_estructural !== prev.sistema_estructural
+      ) {
         next = { ...next, danos: filasIniciales(parcial.sistema_estructural) };
       }
       programarGuardado(next);
@@ -192,13 +252,22 @@ export function FieldCaptureForm({
     setError(null);
     setGuardando(true);
     try {
-      await post<GuardarFormularioResponse>('/campo/formularios', {
-        ...form,
-        estado: 'capturado',
-      });
-      toast.success('Captura enviada a revisión', {
-        description: `${asignacion.consecutivo} — un ingeniero nivel A firmará el dictamen.`,
-      });
+      const next = { ...form, estado: 'capturado' as const };
+      setForm(next);
+      await guardarLocal(next);
+      await sincronizarCampo();
+      const cached = await cargarLocal(next.uuid);
+      const quedaPendiente = cached?.pendiente === 1;
+      setPendienteSync(quedaPendiente);
+      if (quedaPendiente) {
+        toast.info('Captura guardada en el dispositivo', {
+          description: 'Se enviará a revisión cuando haya señal.',
+        });
+      } else {
+        toast.success('Captura enviada a revisión', {
+          description: `${asignacion.consecutivo} — un ingeniero nivel A firmará el dictamen.`,
+        });
+      }
       onCerrado();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'No se pudo cerrar la captura';
@@ -232,6 +301,16 @@ export function FieldCaptureForm({
           <p className="mt-1 text-sm text-muted-foreground">
             Reporte ciudadano: “{asignacion.descripcion}”
           </p>
+        )}
+        {(sinConexion || pendienteSync) && asignacion.editable && (
+          <Alert className="mt-3 border-amber-300 bg-amber-50 text-amber-950">
+            <WifiOff className="size-4" />
+            <AlertDescription>
+              {sinConexion
+                ? 'Sin conexión — los cambios se guardan en este dispositivo y se suben al reconectar.'
+                : 'Hay cambios pendientes de sincronizar con el servidor.'}
+            </AlertDescription>
+          </Alert>
         )}
         {form.estado === 'firmado' && (
           <Alert className="mt-3">
@@ -446,7 +525,7 @@ export function FieldCaptureForm({
 
       {puedeCerrarCaptura && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={guardando} onClick={() => guardar(form)}>
+          <Button variant="outline" disabled={guardando} onClick={() => persistir(form)}>
             Guardar borrador
           </Button>
           <Button disabled={!matrizValida || guardando} onClick={cerrarCaptura}>
@@ -456,7 +535,7 @@ export function FieldCaptureForm({
       )}
       {capturaEnRevision && form && (
         <div className="flex flex-wrap gap-2">
-          <Button disabled={!matrizValida || guardando} onClick={() => guardarCaptura(form)}>
+          <Button disabled={!matrizValida || guardando} onClick={() => persistir(form)}>
             Guardar cambios
           </Button>
         </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import { FieldCaptureForm } from '@/components/campo/FieldCaptureForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { get } from '@/lib/api';
+import { refrescarAsignacionesCampo } from '@/lib/campo/sync';
 import type { AsignacionCampo, MisAsignacionesResponse } from '@/types/campo';
 
 function formatearFecha(iso: string | null | undefined) {
@@ -109,15 +109,18 @@ export function FieldPage() {
   const [abierta, setAbierta] = useState<AsignacionCampo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [desdeCache, setDesdeCache] = useState(false);
 
   const cargar = useCallback(() => {
     setCargando(true);
     setError(null);
-    get<MisAsignacionesResponse>('/campo/mis-asignaciones')
+    const enLinea = navigator.onLine;
+    refrescarAsignacionesCampo()
       .then((r) => {
         setActivas(r.activas);
         setHistorial(r.historial);
         setFotosPorReporte(r.fotos);
+        setDesdeCache(!enLinea);
         setAbierta(null);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo cargar'))
@@ -156,6 +159,15 @@ export function FieldPage() {
           Actualizar
         </Button>
       </div>
+
+      {desdeCache && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950">
+          <WifiOff className="size-4" />
+          <AlertDescription>
+            Mostrando asignaciones guardadas en el dispositivo. Conecta para actualizar.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {error && (
         <Alert variant="destructive">
