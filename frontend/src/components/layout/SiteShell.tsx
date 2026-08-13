@@ -286,10 +286,22 @@ export function SiteHeader() {
                 <SheetTitle>Menú de navegación</SheetTitle>
               </SheetHeader>
               <div className="flex h-full flex-col bg-primary text-primary-foreground">
-                <div className="flex-1 p-4">
-                  <HeaderNav items={items} onNavigate={() => setAbierto(false)} className="flex-col items-stretch gap-1" />
+                <div className="border-b border-white/10 p-4 pr-12">
+                  <Link
+                    to={routes.home}
+                    className="flex items-center gap-2 font-semibold"
+                    onClick={() => setAbierto(false)}
+                  >
+                    <HardHat className="size-5 shrink-0" />
+                    <span>Inspección Cali</span>
+                  </Link>
                 </div>
-                <div className="border-t border-white/10 p-4">
+
+                <div className="p-3">
+                  <SidebarNav items={items} onNavigate={() => setAbierto(false)} />
+                </div>
+
+                <div className="mt-auto border-t border-white/10 p-4">
                   <Button
                     className="w-full gap-2 bg-white text-primary hover:bg-white/90"
                     asChild
