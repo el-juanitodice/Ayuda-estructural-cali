@@ -434,6 +434,15 @@ export class PermissionsService implements OnModuleInit {
     return null;
   }
 
+  /** Ingenieros asignables en moderación (excluye administradores globales). */
+  async getAssignableEngineeringLevel(roleId: string | null): Promise<'A' | 'B' | null> {
+    const nivel = await this.getEngineeringLevel(roleId);
+    if (!nivel) return null;
+    const esAdminGlobal = await this.roleHasPermission(roleId, 'admin_usuarios', 'w');
+    if (esAdminGlobal) return null;
+    return nivel;
+  }
+
   async roleRequiresEngineeringCredentials(roleId: string | null): Promise<boolean> {
     return (await this.getEngineeringLevel(roleId)) !== null;
   }

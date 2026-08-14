@@ -208,7 +208,7 @@ export class ModeracionService {
     const ingenieros = (
       await Promise.all(
         candidatos.map(async (ing) => {
-          const nivel = await this.permissionsService.getEngineeringLevel(ing.roleId);
+          const nivel = await this.permissionsService.getAssignableEngineeringLevel(ing.roleId);
           if (!nivel) return null;
           const carga = await this.asignacionesRepo.count({
             where: {
@@ -258,7 +258,7 @@ export class ModeracionService {
       });
     }
 
-    const nivel = await this.permissionsService.getEngineeringLevel(ingeniero.roleId);
+    const nivel = await this.permissionsService.getAssignableEngineeringLevel(ingeniero.roleId);
     if (!nivel) {
       throw new NotFoundException({
         error: 'ingeniero_no_existe',
