@@ -1,7 +1,9 @@
-# Build
+# Build NestJS
 dist/
-dist-ssr/
-*.local
+*.tsbuildinfo
+
+# Fotos subidas en desarrollo (storage local)
+uploads/
 
 # Secretos
 .env
@@ -19,15 +21,13 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# TypeScript
-*.tsbuildinfo
+# Tests / cobertura
+coverage/
+.nyc_output/
 
 # Editor
 .vscode/*
 !.vscode/extensions.json
 .idea/
 *.suo
-*.ntvs*
-*.njsproj
-*.sln
 .DS_Store

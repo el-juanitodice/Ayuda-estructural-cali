@@ -19,8 +19,8 @@ API nueva en TypeScript. Convive con `api/` (Fastify + PostgreSQL) sin reemplaza
 cp backend/.env.example backend/.env
 # Completa JWT_SECRET y credenciales MySQL
 
-npm install --workspace backend
-npm run start:dev --workspace backend
+npm --prefix backend install
+npm --prefix backend run start:dev
 ```
 
 Puerto por defecto: **3001** (el legacy `api/` sigue en 3000).

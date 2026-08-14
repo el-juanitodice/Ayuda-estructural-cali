@@ -1,17 +1,16 @@
-# Secretos: NUNCA al repo
+# Secretos (cualquier carpeta del monorepo)
 .env
 .env.*
 !.env.example
 
-# Dependencias y build
+# Por si alguien corre npm install en la raíz por error
 node_modules/
-web/dist/
-frontend/dist/
-backend/dist/
-backend/uploads/
-backend/package-lock.json
-*.tsbuildinfo
+/package-lock.json
 
 # Sistema
 .DS_Store
 Thumbs.db
+
+# IDE
+.idea/
+*.sw?

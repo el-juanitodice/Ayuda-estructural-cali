@@ -18,15 +18,16 @@ Conecta al backend NestJS (`backend/`) vía proxy en desarrollo.
 Desde la raíz del monorepo:
 
 ```bash
-npm install
-npm run backend:dev   # NestJS en :3001
-npm run frontend:dev  # Vite en :5173
+npm run install:all   # instala frontend/ y backend/ por separado
+npm run dev:backend   # NestJS en :3001
+npm run dev:frontend  # Vite en :5173
 ```
 
-O solo el frontend (con backend ya corriendo):
+O en cada carpeta:
 
 ```bash
-cd frontend && npm run dev
+cd frontend && npm install && npm run dev
+cd backend && npm install && npm run start:dev
 ```
 
 ## Build
