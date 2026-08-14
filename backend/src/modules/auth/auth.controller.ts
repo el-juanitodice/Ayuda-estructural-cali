@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { Public, Roles } from '../../common/decorators/auth.decorator';
+import { Public } from '../../common/decorators/auth.decorator';
 import { UsuarioActual } from '../../common/decorators/usuario-actual.decorator';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { ModuleAccess } from '../permissions/decorators/module-access.decorator';
 import { AuthService } from './auth.service';
 import { DefinirClaveDto, LoginDto, RecuperarClaveDto, ReautenticarDto } from './dto/auth.dto';
 import type { UsuarioJwt } from './interfaces/usuario-jwt.interface';
@@ -36,7 +36,7 @@ export class AuthController {
     return this.authService.yo(usuario.sub);
   }
 
-  @Roles(RolUsuario.INGENIERO_A)
+  @ModuleAccess('revision', 'u')
   @Throttle({ default: { limit: 20, ttl: 900_000 } })
   @Post('reautenticar')
   @HttpCode(HttpStatus.OK)

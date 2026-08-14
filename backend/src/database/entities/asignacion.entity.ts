@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { NivelIngenieria } from '../../common/enums/dominio.enum';
 import { Reporte } from './reporte.entity';
 import { Usuario } from './usuario.entity';
 
@@ -24,8 +24,8 @@ export class Asignacion {
   @Column({ name: 'asignado_por', type: 'bigint' })
   asignadoPorId!: string;
 
-  @Column({ name: 'rol_asignado', type: 'enum', enum: RolUsuario })
-  rolAsignado!: RolUsuario;
+  @Column({ name: 'nivel_ingenieria', type: 'enum', enum: NivelIngenieria })
+  nivelIngenieria!: NivelIngenieria;
 
   @Column({ name: 'vence_en', type: 'datetime' })
   venceEn!: Date;

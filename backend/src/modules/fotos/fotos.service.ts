@@ -18,7 +18,7 @@ import { StorageService } from '../storage/storage.service';
 import { AisService } from '../../shared/ais/ais.service';
 import type { SubirFotoDto } from './dto/fotos.dto';
 import type { UsuarioJwt } from '../auth/interfaces/usuario-jwt.interface';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { PermissionsService } from '../permissions/permissions.service';
 
 interface ArchivosSubida {
   full: Express.Multer.File;
@@ -37,6 +37,7 @@ export class FotosService {
     private readonly storage: StorageService,
     private readonly aisService: AisService,
     private readonly config: ConfigService,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   async subir(dto: SubirFotoDto, archivos: ArchivosSubida, usuario?: UsuarioJwt) {
@@ -71,7 +72,7 @@ export class FotosService {
     await this.storage.guardar(rutaFull, archivos.full.buffer);
     await this.storage.guardar(rutaThumb, archivos.thumb.buffer);
 
-    const origen = this.resolverOrigen(usuario);
+    const origen = await this.resolverOrigen(usuario);
     const exif = this.parsearExif(dto.exif);
 
     const foto = this.fotosRepo.create({
@@ -117,8 +118,12 @@ export class FotosService {
     });
 
     return {
-      fotos: fotos
-        .filter((f) => this.puedeVerFoto(usuario, f))
+      fotos: (
+        await Promise.all(
+          fotos.map(async (f) => ((await this.puedeVerFoto(usuario, f)) ? f : null)),
+        )
+      )
+        .filter((f): f is Foto => f !== null)
         .map((f) => ({
           uuid: f.uuid,
           categoria: f.categoria,
@@ -137,7 +142,7 @@ export class FotosService {
       });
     }
 
-    if (!this.puedeVerFoto(usuario, foto)) {
+    if (!(await this.puedeVerFoto(usuario, foto))) {
       throw new ForbiddenException({
         error: 'rol_insuficiente',
         mensaje: 'No tienes permiso para ver esta foto.',
@@ -172,10 +177,11 @@ export class FotosService {
     return 'jpeg';
   }
 
-  private resolverOrigen(usuario?: UsuarioJwt): OrigenFoto {
+  private async resolverOrigen(usuario?: UsuarioJwt): Promise<OrigenFoto> {
     if (!usuario) return OrigenFoto.CIUDADANO;
-    if (usuario.rol === RolUsuario.INGENIERO_A) return OrigenFoto.INGENIERO_A;
-    if (usuario.rol === RolUsuario.INGENIERO_B) return OrigenFoto.INGENIERO_B;
+    const level = await this.permissionsService.getEngineeringLevel(usuario.role_id);
+    if (level === 'A') return OrigenFoto.INGENIERO_A;
+    if (level === 'B') return OrigenFoto.INGENIERO_B;
     return OrigenFoto.CIUDADANO;
   }
 
@@ -184,11 +190,16 @@ export class FotosService {
     return u?.id ?? null;
   }
 
-  private puedeVerFoto(
+  private async puedeVerFoto(
     usuario: UsuarioJwt,
     foto: Pick<Foto, 'categoria' | 'origen'>,
-  ): boolean {
-    if (usuario.rol !== RolUsuario.MODERADOR) return true;
+  ): Promise<boolean> {
+    const esModerador = await this.permissionsService.roleHasPermission(
+      usuario.role_id,
+      'moderacion',
+      'r',
+    );
+    if (!esModerador) return true;
     if (foto.origen === OrigenFoto.CIUDADANO) return true;
     return this.aisService.categoriasFoto.obligatorias.includes(foto.categoria);
   }

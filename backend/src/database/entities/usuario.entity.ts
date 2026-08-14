@@ -3,10 +3,13 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  RelationId,
 } from 'typeorm';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { Role } from './role.entity';
 import { TokenAcceso } from './token-acceso.entity';
 
 @Entity('usuarios')
@@ -27,8 +30,12 @@ export class Usuario {
   @Column({ type: 'varchar', length: 30, nullable: true })
   telefono!: string | null;
 
-  @Column({ type: 'enum', enum: RolUsuario })
-  rol!: RolUsuario;
+  @ManyToOne(() => Role, (role) => role.usuarios, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'role_id', foreignKeyConstraintName: 'fk_usuarios_role' })
+  role!: Role | null;
+
+  @RelationId((usuario: Usuario) => usuario.role)
+  roleId!: string | null;
 
   @Column({ name: 'hash_clave', type: 'varchar', length: 255, nullable: true })
   hashClave!: string | null;

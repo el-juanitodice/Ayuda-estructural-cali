@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import {
+  forwardRef,
+  Inject,
   Injectable,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -12,8 +14,13 @@ import { IsNull, MoreThan, Repository } from 'typeorm';
 import { PropositoToken } from '../../common/enums/dominio.enum';
 import { TokenAcceso } from '../../database/entities/token-acceso.entity';
 import { Usuario } from '../../database/entities/usuario.entity';
+import { PermissionsService } from '../permissions/permissions.service';
 import type { DefinirClaveDto, LoginDto, RecuperarClaveDto, ReautenticarDto } from './dto/auth.dto';
-import type { JwtPayload } from './interfaces/usuario-jwt.interface';
+import type {
+  JwtPayload,
+  NavModuleForUser,
+  PermissionFlags,
+} from './interfaces/usuario-jwt.interface';
 import { TicketFirmaService } from './ticket-firma.service';
 import { CorreoService } from '../correo/correo.service';
 
@@ -23,6 +30,17 @@ const OPCIONES_ARGON = {
   timeCost: 2,
   parallelism: 1,
 } as const;
+
+type UsuarioConPermisos = {
+  id: string;
+  email: string;
+  nombre: string;
+  matricula: string | null;
+  role_id: string | null;
+  role_name: string | null;
+  permissions: Record<string, PermissionFlags>;
+  nav_modules: NavModuleForUser[];
+};
 
 @Injectable()
 export class AuthService {
@@ -35,11 +53,14 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly ticketFirma: TicketFirmaService,
     private readonly correo: CorreoService,
+    @Inject(forwardRef(() => PermissionsService))
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   async login({ email, clave }: LoginDto) {
     const usuario = await this.usuariosRepo.findOne({
       where: { email: email.toLowerCase() },
+      relations: { role: true },
     });
 
     const generico = () =>
@@ -116,20 +137,31 @@ export class AuthService {
     };
   }
 
-  perfil(usuario: Usuario) {
+  async perfil(usuario: Usuario): Promise<{ usuario: UsuarioConPermisos }> {
+    const [permissions, nav_modules] = await Promise.all([
+      this.permissionsService.getPermissionMapForRole(usuario.roleId ?? null),
+      this.permissionsService.listNavModulesForUser(usuario.roleId ?? null),
+    ]);
+
     return {
       usuario: {
         id: usuario.uuid,
         email: usuario.email,
         nombre: usuario.nombre,
-        rol: usuario.rol,
         matricula: usuario.matricula,
+        role_id: usuario.roleId ?? null,
+        role_name: usuario.role?.name ?? null,
+        permissions,
+        nav_modules,
       },
     };
   }
 
   async yo(uuid: string) {
-    const usuario = await this.usuariosRepo.findOne({ where: { uuid, activo: true } });
+    const usuario = await this.usuariosRepo.findOne({
+      where: { uuid, activo: true },
+      relations: { role: true },
+    });
     if (!usuario) {
       throw new UnauthorizedException({
         error: 'no_autorizado',
@@ -186,13 +218,19 @@ export class AuthService {
     return token;
   }
 
-  private emitirToken(usuario: Usuario) {
+  private async emitirToken(usuario: Usuario) {
     const payload: JwtPayload = {
       sub: usuario.uuid,
       email: usuario.email,
-      rol: usuario.rol,
       nombre: usuario.nombre,
+      role_id: usuario.roleId ?? null,
+      role_name: usuario.role?.name ?? null,
     };
+
+    const [permissions, nav_modules] = await Promise.all([
+      this.permissionsService.getPermissionMapForRole(usuario.roleId ?? null),
+      this.permissionsService.listNavModulesForUser(usuario.roleId ?? null),
+    ]);
 
     const accessToken = this.jwtService.sign(payload);
     return {
@@ -201,8 +239,11 @@ export class AuthService {
         id: usuario.uuid,
         email: usuario.email,
         nombre: usuario.nombre,
-        rol: usuario.rol,
         matricula: usuario.matricula,
+        role_id: usuario.roleId ?? null,
+        role_name: usuario.role?.name ?? null,
+        permissions,
+        nav_modules,
       },
     };
   }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -6,9 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { TokenAcceso } from '../../database/entities/token-acceso.entity';
 import { Usuario } from '../../database/entities/usuario.entity';
+import { PermissionsModule } from '../permissions/permissions.module';
+import { ModuleAccessGuard } from '../permissions/guards/module-access.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard, RolesGuard } from './guards/auth.guards';
+import { JwtAuthGuard } from './guards/auth.guards';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TicketFirmaService } from './ticket-firma.service';
 
@@ -16,6 +18,7 @@ import { TicketFirmaService } from './ticket-firma.service';
   imports: [
     TypeOrmModule.forFeature([Usuario, TokenAcceso]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    forwardRef(() => PermissionsModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -33,7 +36,7 @@ import { TicketFirmaService } from './ticket-firma.service';
     TicketFirmaService,
     JwtStrategy,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: ModuleAccessGuard },
   ],
   exports: [AuthService, TicketFirmaService, JwtModule],
 })

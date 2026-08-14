@@ -16,6 +16,8 @@ import { StorageModule } from './modules/storage/storage.module';
 import { FotosModule } from './modules/fotos/fotos.module';
 import { CampoModule } from './modules/campo/campo.module';
 import { AisModule } from './shared/ais/ais.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { RolesModule } from './modules/roles/roles.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { AisModule } from './shared/ais/ais.module';
     TableroModule,
     FotosModule,
     CampoModule,
+    PermissionsModule,
+    RolesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

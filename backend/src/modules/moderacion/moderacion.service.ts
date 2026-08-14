@@ -8,7 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
-import { EstadoReporte, RolUsuario } from '../../common/enums/dominio.enum';
+import { EstadoReporte, NivelIngenieria } from '../../common/enums/dominio.enum';
+import { PermissionsService } from '../permissions/permissions.service';
 import { Asignacion } from '../../database/entities/asignacion.entity';
 import { EstadoFormulario, FormularioAis } from '../../database/entities/formulario-ais.entity';
 import { Foto } from '../../database/entities/foto.entity';
@@ -53,6 +54,7 @@ export class ModeracionService {
     private readonly aisService: AisService,
     private readonly config: ConfigService,
     private readonly storage: StorageService,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   async cola() {
@@ -198,33 +200,37 @@ export class ModeracionService {
   }
 
   async listarIngenieros() {
-    const ingenieros = await this.usuariosRepo.find({
-      where: { rol: In([RolUsuario.INGENIERO_A, RolUsuario.INGENIERO_B]), activo: true },
+    const candidatos = await this.usuariosRepo.find({
+      where: { activo: true },
       order: { nombre: 'ASC' },
     });
 
-    const cargas = await Promise.all(
-      ingenieros.map(async (ing) => {
-        const carga = await this.asignacionesRepo.count({
-          where: {
-            ingenieroId: ing.id,
-            cerradaEn: IsNull(),
-            liberadaEn: IsNull(),
-          },
-        });
-        return {
-          id: Number(ing.id),
-          nombre: ing.nombre,
-          rol: ing.rol,
-          profesion: ing.profesion,
-          matricula: ing.matricula,
-          carga_actual: carga,
-        };
-      }),
-    );
+    const ingenieros = (
+      await Promise.all(
+        candidatos.map(async (ing) => {
+          const nivel = await this.permissionsService.getEngineeringLevel(ing.roleId);
+          if (!nivel) return null;
+          const carga = await this.asignacionesRepo.count({
+            where: {
+              ingenieroId: ing.id,
+              cerradaEn: IsNull(),
+              liberadaEn: IsNull(),
+            },
+          });
+          return {
+            id: Number(ing.id),
+            nombre: ing.nombre,
+            nivel,
+            profesion: ing.profesion,
+            matricula: ing.matricula,
+            carga_actual: carga,
+          };
+        }),
+      )
+    ).filter((row): row is NonNullable<typeof row> => row !== null);
 
-    cargas.sort((a, b) => a.carga_actual - b.carga_actual || a.nombre.localeCompare(b.nombre));
-    return { ingenieros: cargas };
+    ingenieros.sort((a, b) => a.carga_actual - b.carga_actual || a.nombre.localeCompare(b.nombre));
+    return { ingenieros };
   }
 
   async asignar(uuid: string, dto: AsignarReporteDto, moderadorUuid: string) {
@@ -242,7 +248,6 @@ export class ModeracionService {
     const ingeniero = await this.usuariosRepo.findOne({
       where: {
         id: String(dto.ingeniero_id),
-        rol: In([RolUsuario.INGENIERO_A, RolUsuario.INGENIERO_B]),
         activo: true,
       },
     });
@@ -253,7 +258,15 @@ export class ModeracionService {
       });
     }
 
-    if (reporte.requiereNivelA && ingeniero.rol === RolUsuario.INGENIERO_B) {
+    const nivel = await this.permissionsService.getEngineeringLevel(ingeniero.roleId);
+    if (!nivel) {
+      throw new NotFoundException({
+        error: 'ingeniero_no_existe',
+        mensaje: 'El usuario indicado no puede recibir asignaciones de campo.',
+      });
+    }
+
+    if (reporte.requiereNivelA && nivel === 'B') {
       throw new UnprocessableEntityException({
         error: 'requiere_nivel_a',
         mensaje: 'Este reporte está escalado: solo puede asignarse a un ingeniero nivel A.',
@@ -276,7 +289,7 @@ export class ModeracionService {
         reporteId: reporte.id,
         ingenieroId: ingeniero.id,
         asignadoPorId: moderador.id,
-        rolAsignado: ingeniero.rol,
+        nivelIngenieria: nivel === 'A' ? NivelIngenieria.A : NivelIngenieria.B,
         venceEn,
       }),
     );

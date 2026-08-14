@@ -8,10 +8,12 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { PropositoToken, RolUsuario } from '../../common/enums/dominio.enum';
+import { PropositoToken } from '../../common/enums/dominio.enum';
+import { Role } from '../../database/entities/role.entity';
 import { Usuario } from '../../database/entities/usuario.entity';
 import { AuthService } from '../auth/auth.service';
 import { CorreoService } from '../correo/correo.service';
+import { PermissionsService } from '../permissions/permissions.service';
 import type { ActualizarUsuarioDto, CrearUsuarioDto } from './dto/admin.dto';
 
 @Injectable()
@@ -19,14 +21,32 @@ export class AdminService {
   constructor(
     @InjectRepository(Usuario)
     private readonly usuariosRepo: Repository<Usuario>,
+    @InjectRepository(Role)
+    private readonly rolesRepo: Repository<Role>,
     private readonly authService: AuthService,
     private readonly config: ConfigService,
     private readonly correo: CorreoService,
+    private readonly permissionsService: PermissionsService,
   ) {}
+
+  async listarRoles() {
+    const roles = await this.rolesRepo.find({ order: { name: 'ASC' } });
+    const enriched = await Promise.all(
+      roles.map(async (role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        requires_engineering_credentials:
+          await this.permissionsService.roleRequiresEngineeringCredentials(role.id),
+      })),
+    );
+    return { roles: enriched };
+  }
 
   async listarUsuarios() {
     const usuarios = await this.usuariosRepo.find({
       order: { creadoEn: 'DESC' },
+      relations: { role: true },
     });
 
     return {
@@ -35,9 +55,11 @@ export class AdminService {
   }
 
   async crearUsuario(dto: CrearUsuarioDto) {
-    const esIngeniero = this.esIngeniero(dto.rol);
+    const roleId = await this.resolverRoleId(dto.role_id);
+    const requiereIngenieria =
+      await this.permissionsService.roleRequiresEngineeringCredentials(roleId);
 
-    if (esIngeniero && !(dto.matricula && dto.profesion)) {
+    if (requiereIngenieria && !(dto.matricula && dto.profesion)) {
       throw new UnprocessableEntityException({
         error: 'matricula_requerida',
         mensaje:
@@ -58,11 +80,11 @@ export class AdminService {
       uuid: uuidv4(),
       email,
       nombre: dto.nombre,
-      rol: dto.rol,
+      roleId,
       telefono: dto.telefono ?? null,
-      matricula: esIngeniero ? dto.matricula! : null,
-      profesion: esIngeniero ? dto.profesion! : null,
-      matriculaVerificadaEn: esIngeniero ? new Date() : null,
+      matricula: requiereIngenieria ? dto.matricula! : null,
+      profesion: requiereIngenieria ? dto.profesion! : null,
+      matriculaVerificadaEn: requiereIngenieria ? new Date() : null,
       activo: true,
     });
 
@@ -81,19 +103,25 @@ export class AdminService {
 
   async actualizarUsuario(id: number, dto: ActualizarUsuarioDto, actorUuid: string) {
     const usuario = await this.buscarPorId(id);
-    const rolFinal = dto.rol ?? usuario.rol;
+    const roleIdFinal = dto.role_id ?? usuario.roleId;
     const activoFinal = dto.activo ?? usuario.activo;
 
     if (usuario.activo && !activoFinal) {
       await this.assertPuedeDesactivar(usuario, actorUuid);
     }
 
-    if (
-      usuario.activo &&
-      usuario.rol === RolUsuario.ADMIN &&
-      rolFinal !== RolUsuario.ADMIN &&
-      activoFinal
-    ) {
+    const teniaAdmin = await this.permissionsService.roleHasPermission(
+      usuario.roleId,
+      'admin_usuarios',
+      'w',
+    );
+    const tendraAdmin = await this.permissionsService.roleHasPermission(
+      roleIdFinal,
+      'admin_usuarios',
+      'w',
+    );
+
+    if (usuario.activo && teniaAdmin && !tendraAdmin && activoFinal) {
       await this.assertNoEsUltimoAdmin();
     }
 
@@ -112,16 +140,20 @@ export class AdminService {
     }
 
     if (dto.nombre !== undefined) usuario.nombre = dto.nombre;
-    if (dto.rol !== undefined) usuario.rol = dto.rol;
     if (dto.telefono !== undefined) usuario.telefono = dto.telefono ?? null;
     if (dto.activo !== undefined) usuario.activo = dto.activo;
 
-    this.aplicarDatosIngeniero(usuario, rolFinal, dto);
+    if (dto.role_id !== undefined) {
+      usuario.roleId = await this.resolverRoleId(dto.role_id);
+    }
+
+    await this.aplicarDatosIngeniero(usuario, dto);
 
     await this.usuariosRepo.save(usuario);
 
+    const actualizado = await this.buscarPorId(id);
     return {
-      usuario: this.serializarUsuario(usuario),
+      usuario: this.serializarUsuario(actualizado),
       mensaje: 'Usuario actualizado.',
     };
   }
@@ -163,8 +195,22 @@ export class AdminService {
     };
   }
 
+  private async resolverRoleId(roleId: string): Promise<string> {
+    const role = await this.rolesRepo.findOne({ where: { id: roleId } });
+    if (!role) {
+      throw new NotFoundException({
+        error: 'rol_no_encontrado',
+        mensaje: 'El rol indicado no existe.',
+      });
+    }
+    return role.id;
+  }
+
   private async buscarPorId(id: number) {
-    const usuario = await this.usuariosRepo.findOne({ where: { id: String(id) } });
+    const usuario = await this.usuariosRepo.findOne({
+      where: { id: String(id) },
+      relations: { role: true },
+    });
     if (!usuario) {
       throw new NotFoundException({
         error: 'usuario_no_encontrado',
@@ -182,13 +228,21 @@ export class AdminService {
       });
     }
 
-    if (usuario.rol === RolUsuario.ADMIN && usuario.activo) {
+    const esAdmin = await this.permissionsService.roleHasPermission(
+      usuario.roleId,
+      'admin_usuarios',
+      'w',
+    );
+    if (esAdmin && usuario.activo) {
       await this.assertNoEsUltimoAdmin();
     }
   }
 
   private async assertNoEsUltimoAdmin() {
-    const adminsActivos = await this.contarAdminsActivos();
+    const adminsActivos = await this.permissionsService.countActiveUsersWithPermission(
+      'admin_usuarios',
+      'w',
+    );
     if (adminsActivos <= 1) {
       throw new UnprocessableEntityException({
         error: 'ultimo_admin',
@@ -197,8 +251,12 @@ export class AdminService {
     }
   }
 
-  private aplicarDatosIngeniero(usuario: Usuario, rolFinal: RolUsuario, dto: ActualizarUsuarioDto) {
-    if (!this.esIngeniero(rolFinal)) {
+  private async aplicarDatosIngeniero(usuario: Usuario, dto: ActualizarUsuarioDto) {
+    const requiereIngenieria = await this.permissionsService.roleRequiresEngineeringCredentials(
+      usuario.roleId,
+    );
+
+    if (!requiereIngenieria) {
       usuario.matricula = null;
       usuario.profesion = null;
       usuario.matriculaVerificadaEn = null;
@@ -217,7 +275,7 @@ export class AdminService {
     }
 
     const cambioIngeniero =
-      dto.matricula !== undefined || dto.profesion !== undefined || dto.rol !== undefined;
+      dto.matricula !== undefined || dto.profesion !== undefined || dto.role_id !== undefined;
 
     usuario.matricula = matricula;
     usuario.profesion = profesion;
@@ -226,23 +284,14 @@ export class AdminService {
     }
   }
 
-  private esIngeniero(rol: RolUsuario) {
-    return [RolUsuario.INGENIERO_A, RolUsuario.INGENIERO_B].includes(rol);
-  }
-
-  private contarAdminsActivos() {
-    return this.usuariosRepo.count({
-      where: { rol: RolUsuario.ADMIN, activo: true },
-    });
-  }
-
   private serializarUsuario(u: Usuario) {
     return {
       id: Number(u.id),
       uuid: u.uuid,
       email: u.email,
       nombre: u.nombre,
-      rol: u.rol,
+      role_id: u.roleId,
+      role_name: u.role?.name ?? null,
       telefono: u.telefono,
       activo: u.activo,
       matricula: u.matricula,

@@ -1,13 +1,12 @@
 import {
   IsBoolean,
   IsEmail,
-  IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { RolUsuario } from '../../../common/enums/dominio.enum';
 
 export class CrearUsuarioDto {
   @IsEmail()
@@ -19,8 +18,8 @@ export class CrearUsuarioDto {
   @MaxLength(120)
   nombre!: string;
 
-  @IsEnum(RolUsuario)
-  rol!: RolUsuario;
+  @IsUUID()
+  role_id!: string;
 
   @IsOptional()
   @IsString()
@@ -51,8 +50,8 @@ export class ActualizarUsuarioDto {
   nombre?: string;
 
   @IsOptional()
-  @IsEnum(RolUsuario)
-  rol?: RolUsuario;
+  @IsUUID()
+  role_id?: string;
 
   @IsOptional()
   @IsString()

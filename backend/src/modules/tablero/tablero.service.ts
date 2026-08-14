@@ -89,7 +89,7 @@ export class TableroService {
     const asignaciones = await this.dataSource.query(`
       SELECT r.consecutivo, r.direccion, a.vence_en,
              (a.vence_en < NOW()) AS vencida,
-             u.nombre AS ingeniero, u.rol AS nivel
+             u.nombre AS ingeniero, a.nivel_ingenieria AS nivel
       FROM asignaciones a
       INNER JOIN reportes r ON r.id = a.reporte_id
       INNER JOIN usuarios u ON u.id = a.ingeniero_id

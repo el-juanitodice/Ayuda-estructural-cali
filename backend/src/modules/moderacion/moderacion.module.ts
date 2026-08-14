@@ -5,6 +5,7 @@ import { FormularioAis } from '../../database/entities/formulario-ais.entity';
 import { Foto } from '../../database/entities/foto.entity';
 import { Reporte } from '../../database/entities/reporte.entity';
 import { Usuario } from '../../database/entities/usuario.entity';
+import { PermissionsModule } from '../permissions/permissions.module';
 import { AisModule } from '../../shared/ais/ais.module';
 import { ModeracionController } from './moderacion.controller';
 import { ModeracionService } from './moderacion.service';
@@ -12,6 +13,7 @@ import { ModeracionService } from './moderacion.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Reporte, Usuario, Asignacion, FormularioAis, Foto]),
+    PermissionsModule,
     AisModule,
   ],
   controllers: [ModeracionController],

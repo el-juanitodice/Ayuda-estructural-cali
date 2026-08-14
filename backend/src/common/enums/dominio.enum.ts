@@ -1,9 +1,7 @@
-export enum RolUsuario {
-  ADMIN = 'admin',
-  COORDINADOR = 'coordinador',
-  MODERADOR = 'moderador',
-  INGENIERO_A = 'ingeniero_a',
-  INGENIERO_B = 'ingeniero_b',
+/** Nivel técnico asignado a un reporte (dominio, no rol de acceso). */
+export enum NivelIngenieria {
+  A = 'A',
+  B = 'B',
 }
 
 export enum EstadoReporte {

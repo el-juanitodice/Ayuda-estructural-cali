@@ -8,29 +8,36 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Roles } from '../../common/decorators/auth.decorator';
 import { UsuarioActual } from '../../common/decorators/usuario-actual.decorator';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { ModuleAccess } from '../permissions/decorators/module-access.decorator';
 import type { UsuarioJwt } from '../auth/interfaces/usuario-jwt.interface';
 import { AdminService } from './admin.service';
 import { ActualizarUsuarioDto, CrearUsuarioDto } from './dto/admin.dto';
 
 @Controller('admin')
-@Roles(RolUsuario.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('roles')
+  @ModuleAccess('admin_usuarios', 'r')
+  listarRoles() {
+    return this.adminService.listarRoles();
+  }
+
   @Get('usuarios')
+  @ModuleAccess('admin_usuarios', 'r')
   listarUsuarios() {
     return this.adminService.listarUsuarios();
   }
 
   @Post('usuarios')
+  @ModuleAccess('admin_usuarios', 'w')
   crearUsuario(@Body() dto: CrearUsuarioDto) {
     return this.adminService.crearUsuario(dto);
   }
 
   @Patch('usuarios/:id')
+  @ModuleAccess('admin_usuarios', 'u')
   actualizarUsuario(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ActualizarUsuarioDto,
@@ -40,6 +47,7 @@ export class AdminController {
   }
 
   @Delete('usuarios/:id')
+  @ModuleAccess('admin_usuarios', 'd')
   desactivarUsuario(
     @Param('id', ParseIntPipe) id: number,
     @UsuarioActual() actor: UsuarioJwt,
@@ -48,6 +56,7 @@ export class AdminController {
   }
 
   @Post('usuarios/:id/reenviar-enlace')
+  @ModuleAccess('admin_usuarios', 'u')
   reenviarEnlaceAlta(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.reenviarEnlaceAlta(id);
   }

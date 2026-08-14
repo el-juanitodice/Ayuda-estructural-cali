@@ -4,6 +4,9 @@ export { Usuario } from './usuario.entity';
 export { TokenAcceso } from './token-acceso.entity';
 export { Reporte } from './reporte.entity';
 export { FormularioAis, EstadoFormulario } from './formulario-ais.entity';
+export { Role } from './role.entity';
+export { AppModuleEntity } from './app-module.entity';
+export { RolePermission } from './role-permission.entity';
 
 import { Asignacion } from './asignacion.entity';
 import { Foto } from './foto.entity';
@@ -11,5 +14,18 @@ import { Usuario } from './usuario.entity';
 import { TokenAcceso } from './token-acceso.entity';
 import { Reporte } from './reporte.entity';
 import { FormularioAis } from './formulario-ais.entity';
+import { Role } from './role.entity';
+import { AppModuleEntity } from './app-module.entity';
+import { RolePermission } from './role-permission.entity';
 
-export const entityList = [Usuario, TokenAcceso, Reporte, FormularioAis, Foto, Asignacion];
+export const entityList = [
+  Usuario,
+  TokenAcceso,
+  Reporte,
+  FormularioAis,
+  Foto,
+  Asignacion,
+  Role,
+  AppModuleEntity,
+  RolePermission,
+];

@@ -14,9 +14,9 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { Public, Roles } from '../../common/decorators/auth.decorator';
+import { Public } from '../../common/decorators/auth.decorator';
 import { UsuarioActual } from '../../common/decorators/usuario-actual.decorator';
-import { RolUsuario } from '../../common/enums/dominio.enum';
+import { ModuleAccess } from '../permissions/decorators/module-access.decorator';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt.guard';
 import type { UsuarioJwt } from '../auth/interfaces/usuario-jwt.interface';
 import {
@@ -67,13 +67,7 @@ export class FotosController {
 
   /** Lista fotos de un reporte (filtradas por rol) */
   @Get('reporte/:reporteUuid')
-  @Roles(
-    RolUsuario.MODERADOR,
-    RolUsuario.COORDINADOR,
-    RolUsuario.ADMIN,
-    RolUsuario.INGENIERO_A,
-    RolUsuario.INGENIERO_B,
-  )
+  @ModuleAccess('fotos', 'r')
   listarPorReporte(
     @Param() params: ListarFotosReporteParamsDto,
     @UsuarioActual() usuario: UsuarioJwt,
@@ -83,13 +77,7 @@ export class FotosController {
 
   /** Sirve la imagen desde el almacenamiento local (autenticado) */
   @Get(':uuid')
-  @Roles(
-    RolUsuario.MODERADOR,
-    RolUsuario.COORDINADOR,
-    RolUsuario.ADMIN,
-    RolUsuario.INGENIERO_A,
-    RolUsuario.INGENIERO_B,
-  )
+  @ModuleAccess('fotos', 'r')
   async ver(
     @Param() params: ObtenerFotoParamsDto,
     @Query() query: ObtenerFotoQueryDto,

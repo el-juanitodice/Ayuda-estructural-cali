@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import { EstadoReporte, HabitabilidadColor, RolUsuario } from '../../common/enums/dominio.enum';
+import { EstadoReporte, HabitabilidadColor } from '../../common/enums/dominio.enum';
+import type { UsuarioJwt } from '../auth/interfaces/usuario-jwt.interface';
+import { PermissionsService } from '../permissions/permissions.service';
 import { Asignacion } from '../../database/entities/asignacion.entity';
 import {
   EstadoFormulario,
@@ -38,6 +40,7 @@ export class CampoService {
     private readonly aisService: AisService,
     private readonly ticketFirma: TicketFirmaService,
     private readonly dataSource: DataSource,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   async misAsignaciones(usuarioUuid: string) {
@@ -54,7 +57,7 @@ export class CampoService {
       vence_en: Date | null;
       cerrada_en: Date | null;
       liberada_en: Date | null;
-      rol_asignado: string | null;
+      nivel_ingenieria: string | null;
       reporte_id: string;
       reporte_uuid: string;
       consecutivo: string;
@@ -81,7 +84,7 @@ export class CampoService {
 
     const activas = await this.dataSource.query<FilaAsignacion[]>(
       `
-      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.rol_asignado,
+      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.nivel_ingenieria,
              r.id AS reporte_id, r.uuid AS reporte_uuid, r.consecutivo, r.direccion, r.barrio, r.comuna,
              r.tipo_edificacion, r.pisos_declarados, r.unidades_declaradas,
              r.habitada, r.uso_declarado, r.descripcion, r.estado,
@@ -102,7 +105,7 @@ export class CampoService {
 
     const historial = await this.dataSource.query<FilaAsignacion[]>(
       `
-      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.rol_asignado,
+      SELECT a.id AS asignacion_id, a.vence_en, a.cerrada_en, a.liberada_en, a.nivel_ingenieria,
              r.id AS reporte_id, r.uuid AS reporte_uuid, r.consecutivo, r.direccion, r.barrio, r.comuna,
              r.tipo_edificacion, r.pisos_declarados, r.unidades_declaradas,
              r.habitada, r.uso_declarado, r.descripcion, r.estado,
@@ -163,7 +166,7 @@ export class CampoService {
       return {
         asignacion_id: fila.asignacion_id ? Number(fila.asignacion_id) : null,
         vence_en: fila.vence_en,
-        rol_asignado: fila.rol_asignado,
+        nivel_ingenieria: fila.nivel_ingenieria,
         reporte_uuid: fila.reporte_uuid,
         consecutivo: fila.consecutivo,
         direccion: fila.direccion,
@@ -455,7 +458,7 @@ export class CampoService {
     };
   }
 
-  async obtenerFormulario(uuid: string, usuarioUuid: string, rol: RolUsuario) {
+  async obtenerFormulario(uuid: string, actor: UsuarioJwt) {
     const formulario = await this.formulariosRepo.findOne({
       where: { uuid },
       relations: { reporte: true, capturadoPor: true, firmadoPor: true },
@@ -468,7 +471,7 @@ export class CampoService {
       });
     }
 
-    const usuario = await this.usuariosRepo.findOne({ where: { uuid: usuarioUuid } });
+    const usuario = await this.usuariosRepo.findOne({ where: { uuid: actor.sub } });
     if (!usuario) {
       throw new UnauthorizedException({
         error: 'no_autorizado',
@@ -476,8 +479,19 @@ export class CampoService {
       });
     }
 
+    const map = await this.permissionsService.getPermissionMapForRole(actor.role_id);
+    const puedeCampo = map.campo?.r;
+    const puedeRevision = map.revision?.r;
+    if (!puedeCampo && !puedeRevision) {
+      throw new ForbiddenException({
+        error: 'prohibido',
+        mensaje: 'No tienes permiso para ver este formulario.',
+      });
+    }
+
+    const nivel = await this.permissionsService.getEngineeringLevel(actor.role_id);
     if (
-      rol === RolUsuario.INGENIERO_B &&
+      nivel === 'B' &&
       formulario.capturadoPorId !== usuario.id
     ) {
       throw new ForbiddenException({
