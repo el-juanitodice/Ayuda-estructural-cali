@@ -165,14 +165,15 @@ export function SitePublicHeader() {
 export function SiteStaffHeader() {
   const isMobile = useIsMobile();
 
+  if (!isMobile) {
+    return null;
+  }
+
   return (
-    <header className="site-staff-header flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden sm:px-6">
-      {isMobile && <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />}
-      {isMobile && <Separator orientation="vertical" className="mr-1 h-4" />}
-      <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-        <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-base">
-          Inspección estructural — Cali
-        </p>
+    <header className="site-staff-header flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden">
+      <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />
+      <Separator orientation="vertical" className="mr-1 h-4" />
+      <div className="ml-auto">
         <SyncQueueBadge />
       </div>
     </header>
