@@ -38,15 +38,14 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { routes } from '@/constants/routes';
-import { get, post } from '@/lib/api';
+import { authService } from '@/api/auth/auth.service';
+import { campoService } from '@/api/campo/campo.service';
 import type {
-  ColaRevisionResponse,
   FirmarResponse,
   FormularioResponse,
   HabitabilidadColor,
   ItemColaRevision,
   NivelRiesgo,
-  ReautenticarResponse,
   RiesgosDictamen,
 } from '@/types/revision';
 
@@ -162,7 +161,7 @@ function DetalleRevision({
 
   useEffect(() => {
     setCargando(true);
-    get<FormularioResponse>(`/campo/formularios/${item.formulario_uuid}`)
+    campoService.obtenerFormulario(item.formulario_uuid)
       .then((r) => {
         setDatos(r);
         if (!editable && r.formulario.estado === 'firmado') {
@@ -205,8 +204,8 @@ function DetalleRevision({
     setError(null);
     setFirmando(true);
     try {
-      const { ticket_firma } = await post<ReautenticarResponse>('/auth/reautenticar', { clave });
-      const r = await post<FirmarResponse>(`/campo/formularios/${item.formulario_uuid}/firmar`, {
+      const { ticket_firma } = await authService.reautenticar(clave);
+      const r = await campoService.firmarDictamen(item.formulario_uuid, {
         ticket_firma,
         riesgos: {
           estabilidad: riesgos.estabilidad,
@@ -559,7 +558,7 @@ export function ReviewPage() {
   const cargar = useCallback(() => {
     setCargando(true);
     setError(null);
-    get<ColaRevisionResponse>('/campo/revision')
+    campoService.colaRevision()
       .then((r) => {
         setPendientes(r.pendientes);
         setHistorial(r.historial);

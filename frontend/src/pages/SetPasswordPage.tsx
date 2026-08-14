@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { routes } from '@/constants/routes';
-import { post } from '@/lib/api';
+import { authService } from '@/api/auth/auth.service';
 
 interface SetPasswordForm {
   clave: string;
@@ -34,7 +34,7 @@ export function SetPasswordPage({ token }: SetPasswordPageProps) {
   const onSubmit = async (datos: SetPasswordForm) => {
     setError(null);
     try {
-      await post('/auth/definir-clave', { token, clave: datos.clave });
+      await authService.definirClave(token, datos.clave);
       toast.success('Contraseña establecida', {
         description: 'Ya puedes ingresar con tu correo y la nueva contraseña.',
       });

@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapLegend } from '@/components/map/MapLegend';
 import { CALI_CENTER, COLORES_MAPA, ETIQUETAS_MAPA } from '@/constants/map';
-import { get } from '@/lib/api';
+import { reportesService } from '@/api/reportes/reportes.service';
 import type { MapaPunto, MapaResponse } from '@/types/map';
 
 function popupHtml(p: MapaPunto): string {
@@ -37,7 +37,7 @@ export function MapPage() {
 
     (async () => {
       try {
-        const datos = await get<MapaResponse>('/mapa');
+        const datos = await reportesService.obtenerMapa();
         if (cancelado) return;
 
         setLeyenda(datos.leyenda);

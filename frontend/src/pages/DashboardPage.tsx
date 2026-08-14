@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { CLASE_COLOR, ETIQUETA_COLOR } from '@/constants/reportStatus';
 import { COLORES_MAPA } from '@/constants/map';
-import { descargarArchivo, get } from '@/lib/api';
+import { tableroService } from '@/api/tablero/tablero.service';
 import { cn } from '@/lib/utils';
 import type { ColorHabitabilidad } from '@/types/report';
 import type {
@@ -86,9 +86,9 @@ export function DashboardPage() {
     setError(null);
     try {
       const [c, v, d] = await Promise.all([
-        get<CoberturaTableroResponse>('/tablero/cobertura'),
-        get<VencimientosTableroResponse>('/tablero/vencimientos'),
-        get<DiscrepanciasTableroResponse>('/tablero/discrepancias'),
+        tableroService.cobertura(),
+        tableroService.vencimientos(),
+        tableroService.discrepancias(),
       ]);
       setCobertura(c);
       setVencimientos(v.asignaciones);
@@ -109,7 +109,7 @@ export function DashboardPage() {
     setError(null);
     try {
       const hoy = new Date().toISOString().slice(0, 10);
-      await descargarArchivo('/tablero/exportar?formato=csv', `inspecciones_${hoy}.csv`);
+      await tableroService.exportarCsv(`inspecciones_${hoy}.csv`);
       toast.success('CSV exportado', { description: `inspecciones_${hoy}.csv` });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'No se pudo exportar';

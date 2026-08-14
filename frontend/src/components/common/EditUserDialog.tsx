@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { patch, post } from '@/lib/api';
+import { adminService } from '@/api/admin/admin.service';
+import { useAuth } from '@/hooks/useAuth';
 import type { Rol } from '@/types/auth';
-import type { ActualizarUsuarioResponse, ReenviarEnlaceResponse, UsuarioAdmin } from '@/types/admin';
+import type { ActualizarUsuarioResponse, UsuarioAdmin } from '@/types/admin';
 
 interface FormularioUsuario {
   email: string;
@@ -77,7 +77,7 @@ export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: E
     setError(null);
     setGuardando(true);
     try {
-      const r = await patch<ActualizarUsuarioResponse>(`/admin/usuarios/${usuario.id}`, {
+      const r = await adminService.actualizarUsuario(usuario.id, {
         email: form.email,
         nombre: form.nombre,
         rol: form.rol,
@@ -101,7 +101,7 @@ export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: E
     if (!usuario) return;
     setReenviando(true);
     try {
-      const r = await post<ReenviarEnlaceResponse>(`/admin/usuarios/${usuario.id}/reenviar-enlace`);
+      const r = await adminService.reenviarEnlace(usuario.id);
       toast.success('Enlace reenviado', {
         description: r.enlace_alta ? `${r.mensaje} Dev: ${r.enlace_alta}` : r.mensaje,
         duration: r.enlace_alta ? 15000 : 8000,

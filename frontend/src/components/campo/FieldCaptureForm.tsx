@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { get } from '@/lib/api';
+import { campoService } from '@/api/campo/campo.service';
 import {
   cacheFormularioServidor,
   cargarLocal,
@@ -128,9 +128,7 @@ export function FieldCaptureForm({
 
         if (navigator.onLine && asignacion.formulario_uuid) {
           try {
-            const r = await get<FormularioResponse>(
-              `/campo/formularios/${asignacion.formulario_uuid}`,
-            );
+            const r = await campoService.obtenerFormulario(asignacion.formulario_uuid);
             const desdeServidor = mapFormularioFromApi(r);
             if (local?.pendiente === 1) {
               setForm(payloadDesdeLocal(local));
@@ -153,9 +151,7 @@ export function FieldCaptureForm({
         }
 
         if (navigator.onLine && asignacion.formulario_uuid) {
-          const r = await get<FormularioResponse>(
-            `/campo/formularios/${asignacion.formulario_uuid}`,
-          );
+          const r = await campoService.obtenerFormulario(asignacion.formulario_uuid);
           const desdeServidor = mapFormularioFromApi(r);
           setForm(desdeServidor);
           await cacheFormularioServidor(desdeServidor);

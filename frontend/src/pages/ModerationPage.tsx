@@ -23,9 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { del, get, post } from '@/lib/api';
+import { moderacionService } from '@/api/moderacion/moderacion.service';
 import type {
-  ColaModeracionResponse,
   IngenieroDisponible,
   MotivoDescarte,
   ReporteCola,
@@ -143,23 +142,23 @@ function DetalleReporte({
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
-    get<{ fotos: FotoResumen[] }>(`/fotos/reporte/${reporte.uuid}`)
-      .then((r) => setFotos(r.fotos))
+    moderacionService.fotosReporte(reporte.uuid)
+      .then(setFotos)
       .catch(() => setFotos([]));
   }, [reporte.uuid]);
 
   useEffect(() => {
     if (asignacionDirecta) {
-      get<{ ingenieros: IngenieroDisponible[] }>('/moderacion/ingenieros')
-        .then((r) => setIngenieros(r.ingenieros))
+      moderacionService.listarIngenieros()
+        .then(setIngenieros)
         .catch(() => {});
     }
   }, [asignacionDirecta]);
 
   useEffect(() => {
     if (resultado && !ingenieros.length) {
-      get<{ ingenieros: IngenieroDisponible[] }>('/moderacion/ingenieros')
-        .then((r) => setIngenieros(r.ingenieros))
+      moderacionService.listarIngenieros()
+        .then(setIngenieros)
         .catch(() => {});
     }
   }, [resultado, ingenieros.length]);
@@ -168,7 +167,7 @@ function DetalleReporte({
     setError(null);
     setCargando(true);
     try {
-      const r = await post<ValidarResponse>(`/moderacion/${reporte.uuid}/validar`, {
+      const r = await moderacionService.validar(reporte.uuid, {
         notas_llamada: notas,
       });
       setResultado(r);
@@ -188,7 +187,7 @@ function DetalleReporte({
     setError(null);
     setCargando(true);
     try {
-      await post(`/moderacion/${reporte.uuid}/descartar`, { motivo });
+      await moderacionService.descartar(reporte.uuid, motivo);
       toast.success('Reporte descartado', {
         description: `${reporte.consecutivo ?? reporte.uuid} — ${ETIQUETA_MOTIVO_DESCARTE[motivo]}`,
       });
@@ -206,7 +205,7 @@ function DetalleReporte({
     setError(null);
     setCargando(true);
     try {
-      await post(`/moderacion/${reporte.uuid}/asignar`, {
+      await moderacionService.asignar(reporte.uuid, {
         ingeniero_id: Number(ingenieroId),
       });
       const ingeniero = ingenieros.find((i) => String(i.id) === ingenieroId);
@@ -505,7 +504,7 @@ export function ModerationPage() {
     setCargando(true);
     setError(null);
     try {
-      const r = await get<ColaModeracionResponse>('/moderacion/cola');
+      const r = await moderacionService.obtenerCola();
       setEnCola(r.en_cola);
       setHistorial(r.historial);
       setSeleccionado(null);
@@ -526,7 +525,7 @@ export function ModerationPage() {
     setEliminandoUuid(reporteAEliminar.uuid);
     setError(null);
     try {
-      await del(`/moderacion/${reporteAEliminar.uuid}`);
+      await moderacionService.eliminarReporte(reporteAEliminar.uuid);
       toast.success('Reporte eliminado', {
         description: reporteAEliminar.consecutivo ?? reporteAEliminar.uuid,
       });

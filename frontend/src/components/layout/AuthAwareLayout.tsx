@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { AppFade } from '@/components/common/AppFade';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { StaffLayout } from '@/components/layout/StaffLayout';

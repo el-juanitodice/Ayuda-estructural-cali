@@ -1,67 +1,28 @@
-import { useCallback, useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
 import { CreateUserDialog } from '@/components/common/CreateUserDialog';
 import { DeleteUserDialog } from '@/components/common/DeleteUserDialog';
 import { EditUserDialog } from '@/components/common/EditUserDialog';
 import { UsersList } from '@/components/common/UsersList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { get } from '@/lib/api';
-import type {
-  ActualizarUsuarioResponse,
-  CrearUsuarioResponse,
-  DesactivarUsuarioResponse,
-  ListarUsuariosResponse,
-  UsuarioAdmin,
-} from '@/types/admin';
+import { useAdminPage } from '@/pages/AdminPage/hooks/useAdminPage';
 
 export function AdminPage() {
-  const { usuario: sesion } = useAuth();
-  const [usuarios, setUsuarios] = useState<ListarUsuariosResponse['usuarios']>([]);
-  const [dialogCrearAbierto, setDialogCrearAbierto] = useState(false);
-  const [usuarioEditando, setUsuarioEditando] = useState<UsuarioAdmin | null>(null);
-  const [usuarioEliminando, setUsuarioEliminando] = useState<UsuarioAdmin | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
-
-  const cargar = useCallback(async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const r = await get<ListarUsuariosResponse>('/admin/usuarios');
-      setUsuarios(r.usuarios);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo cargar la lista');
-    } finally {
-      setCargando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
-
-  const onCreado = (respuesta: CrearUsuarioResponse) => {
-    toast.success('Cuenta creada', {
-      description: respuesta.enlace_alta
-        ? `${respuesta.mensaje} Enlace dev: ${respuesta.enlace_alta}`
-        : respuesta.mensaje,
-      duration: respuesta.enlace_alta ? 15000 : 8000,
-    });
-    void cargar();
-  };
-
-  const onActualizado = (respuesta: ActualizarUsuarioResponse) => {
-    toast.success('Usuario actualizado', { description: respuesta.mensaje });
-    void cargar();
-  };
-
-  const onEliminado = (respuesta: DesactivarUsuarioResponse) => {
-    toast.success('Cuenta desactivada', { description: respuesta.mensaje });
-    void cargar();
-  };
+  const {
+    sesion,
+    usuarios,
+    error,
+    isLoading,
+    dialogCrearAbierto,
+    usuarioEditando,
+    usuarioEliminando,
+    setDialogCrearAbierto,
+    setUsuarioEditando,
+    setUsuarioEliminando,
+    onCreado,
+    onActualizado,
+    onEliminado,
+  } = useAdminPage();
 
   return (
     <div className="w-full space-y-3">
@@ -79,7 +40,7 @@ export function AdminPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          {cargando ? (
+          {isLoading ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">Cargando usuarios…</p>
           ) : (
             <UsersList

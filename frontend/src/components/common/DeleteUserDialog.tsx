@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { del } from '@/lib/api';
+import { adminService } from '@/api/admin/admin.service';
 import type { DesactivarUsuarioResponse, UsuarioAdmin } from '@/types/admin';
 
 interface DeleteUserDialogProps {
@@ -35,7 +35,7 @@ export function DeleteUserDialog({
     if (!usuario) return;
     setEliminando(true);
     try {
-      const r = await del<DesactivarUsuarioResponse>(`/admin/usuarios/${usuario.id}`);
+      const r = await adminService.desactivarUsuario(usuario.id);
       onEliminado(r);
       onOpenChange(false);
     } catch (err) {

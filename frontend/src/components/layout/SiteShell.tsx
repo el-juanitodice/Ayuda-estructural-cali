@@ -4,7 +4,7 @@ import { HardHat, LogIn, LogOut, Menu } from 'lucide-react';
 import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { routes } from '@/constants/routes';
 import { cn } from '@/lib/utils';

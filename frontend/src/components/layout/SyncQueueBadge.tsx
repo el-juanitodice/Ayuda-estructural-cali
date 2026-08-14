@@ -1,7 +1,7 @@
 import { Camera, ClipboardList } from 'lucide-react';
 import { useCampoSync } from '@/contexts/CampoSyncContext';
 import { useUploadQueue } from '@/contexts/UploadQueueContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export function SyncQueueBadge({ className }: { className?: string }) {

@@ -1,6 +1,5 @@
-import { API_BASE } from '@/config/api';
-import { ErrorApi, type ApiErrorBody } from '@/lib/api';
-import { getAccessToken } from '@/lib/token';
+import { ErrorApi } from '@/api/http.client';
+import { fotosService } from '@/api/fotos/fotos.service';
 import type { ConteoCola } from '@/types/upload';
 import { comprimirFoto } from './compresor';
 import { contarPorEstado, db, sanearColaAlArrancar } from './db';
@@ -147,7 +146,7 @@ async function subirFoto(foto: Awaited<ReturnType<typeof tomarSiguiente>> & obje
     form.append('full', foto.full, `full.${ext}`);
     form.append('thumb', foto.thumb, `thumb.${ext}`);
 
-    const r = await postMultipart('/fotos/subir', form);
+    const r = await fotosService.subir(form);
     if (r.ya_confirmada || r.ok) {
       await marcarConfirmada(foto.uuid);
     }
@@ -214,17 +213,4 @@ export async function encolarFotosReporte(
     }
   }
   return ok;
-}
-
-async function postMultipart(ruta: string, formData: FormData) {
-  const token = getAccessToken();
-  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const r = await fetch(`${API_BASE}${ruta}`, { method: 'POST', headers, body: formData });
-  const cuerpo = (await r.json().catch(() => ({}))) as ApiErrorBody & {
-    ok?: boolean;
-    ya_confirmada?: boolean;
-  };
-  if (!r.ok) throw new ErrorApi(r.status, cuerpo);
-  return cuerpo;
 }

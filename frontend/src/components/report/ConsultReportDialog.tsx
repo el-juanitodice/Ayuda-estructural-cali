@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { get } from '@/lib/api';
+import { reportesService } from '@/api/reportes/reportes.service';
 import type { EstadoReporteResponse } from '@/types/report';
 import { PATRON_RADICADO, PLACEHOLDER_RADICADO } from '@/types/report';
 
@@ -71,9 +71,7 @@ export function ConsultReportDialog({ open, onOpenChange, radicadoInicial = '' }
     setError(null);
     setConsultando(true);
     try {
-      const r = await get<EstadoReporteResponse>(
-        `/reportes/${consecutivo.trim().toUpperCase()}/estado`,
-      );
+      const r = await reportesService.consultarEstado(consecutivo);
       setResultado(r);
     } catch (e) {
       setResultado(null);

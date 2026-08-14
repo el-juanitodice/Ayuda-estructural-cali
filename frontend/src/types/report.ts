@@ -11,6 +11,11 @@ export type EstadoReporte =
 
 export type ColorHabitabilidad = 'verde' | 'amarillo' | 'naranja' | 'rojo';
 
+export interface CrearReporteResponse {
+  uuid: string;
+  consecutivo: string;
+}
+
 export interface EstadoReporteResponse {
   consecutivo: string;
   estado: EstadoReporte;

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { post } from '@/lib/api';
+import { authService } from '@/api/auth/auth.service';
+import { useAuth } from '@/hooks/useAuth';
 import { destinoPanel } from '@/lib/auth-routing';
 import type { Usuario } from '@/types/auth';
 
@@ -43,7 +43,7 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
     setError(null);
     setInfo(null);
     try {
-      const r = await post<{ accessToken: string; usuario: Usuario }>('/auth/login', datos);
+      const r = await authService.login(datos);
       entrar(r.usuario, r.accessToken);
       navigate(redirectTo || destinoTrasLogin(r.usuario), { replace: true });
     } catch (e) {
@@ -61,7 +61,7 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
       return;
     }
     setError(null);
-    await post('/auth/recuperar', { email }).catch(() => {});
+    await authService.recuperarClave(email).catch(() => {});
     const msg = 'Si el correo existe, te llegará un enlace de recuperación.';
     setInfo(msg);
     toast.info('Solicitud enviada', { description: msg });

@@ -5,14 +5,15 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
+  type PropsWithChildren,
 } from 'react';
-import { get } from '@/lib/api';
-import { clearAccessToken, getAccessToken, onAccessTokenCleared, setAccessToken } from '@/lib/token';
+import { authService } from '@/api/auth/auth.service';
+import { onAccessTokenCleared, setAccessToken } from '@/lib/token';
 import type { Usuario } from '@/types/auth';
 
 interface AuthContextValue {
   usuario: Usuario | null;
+  /** `true` mientras se valida el token con `/auth/yo` (p. ej. tras F5). */
   cargando: boolean;
   entrar: (usuario: Usuario, accessToken: string) => void;
   salir: () => void;
@@ -21,21 +22,22 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(() => Boolean(authService.getToken()));
 
   const refrescar = useCallback(async () => {
-    if (!getAccessToken()) {
+    if (!authService.getToken()) {
       setUsuario(null);
       setCargando(false);
       return;
     }
+
+    setCargando(true);
     try {
-      const r = await get<{ usuario: Usuario }>('/auth/yo');
-      setUsuario(r.usuario);
+      setUsuario(await authService.yo());
     } catch {
-      clearAccessToken();
+      authService.logout();
       setUsuario(null);
     } finally {
       setCargando(false);
@@ -51,23 +53,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const entrar = useCallback((u: Usuario, token: string) => {
     setAccessToken(token);
     setUsuario(u);
+    setCargando(false);
   }, []);
 
   const salir = useCallback(() => {
-    clearAccessToken();
+    authService.logout();
     setUsuario(null);
   }, []);
 
-  const value = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({ usuario, cargando, entrar, salir, refrescar }),
     [usuario, cargando, entrar, salir, refrescar],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth requiere AuthProvider');
-  return ctx;
-}
+export const useAuth = (): AuthContextValue => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de AuthProvider');
+  }
+  return context;
+};

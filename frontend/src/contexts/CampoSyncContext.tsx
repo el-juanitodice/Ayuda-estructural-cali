@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { iniciarSyncCampo, suscribirPendientesCampo } from '@/lib/campo/sync';
 
 interface CampoSyncContextValue {

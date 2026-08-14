@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AppFade } from '@/components/common/AppFade';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { routes } from '@/constants/routes';
 import type { Rol } from '@/types/auth';
 

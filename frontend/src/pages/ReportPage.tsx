@@ -11,12 +11,9 @@ import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { Form } from '@/components/ui/form';
 import { encolarFotosReporte } from '@/lib/fotos/cola-subida';
 import { construirPayloadReporte, gpsEnAreaCali, type UbicacionReporte } from '@/lib/reporte';
-import { ErrorApi, post } from '@/lib/api';
-
-interface CrearReporteResponse {
-  uuid: string;
-  consecutivo: string;
-}
+import { ErrorApi } from '@/api/http.client';
+import { reportesService } from '@/api/reportes/reportes.service';
+import type { CrearReporteResponse } from '@/types/report';
 
 export function ReportPage() {
   const { abrirConsulta } = useConsultReport();
@@ -94,7 +91,7 @@ export function ReportPage() {
 
     setEnviando(true);
     try {
-      const r = await post<CrearReporteResponse>('/reportes', construirPayloadReporte(datos, ubicacion));
+      const r = await reportesService.crearReporte(construirPayloadReporte(datos, ubicacion));
       const fotosEncoladas = await encolarFotosSeleccionadas(r.uuid);
       setModalEmergencia(false);
       notificarReporteRecibido(r.consecutivo, fotosEncoladas);

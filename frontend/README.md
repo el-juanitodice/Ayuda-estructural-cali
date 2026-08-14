@@ -13,6 +13,27 @@ Conecta al backend NestJS (`backend/`) vía proxy en desarrollo.
 - Leaflet (mapa público)
 - Fetch nativo (`src/lib/api.ts`) con JWT Bearer
 
+## Arquitectura (patrón Festiva)
+
+```
+src/
+├── api/                    # Servicios HTTP por dominio
+│   ├── http.client.ts      # fetch + auth + errores
+│   ├── auth/auth.service.ts
+│   ├── admin/admin.service.ts
+│   └── …
+├── hooks/                  # Hooks globales (useAuth, …)
+└── pages/
+    └── AdminPage/
+        ├── AdminPage.tsx   # Solo UI
+        └── hooks/
+            └── useAdminPage.ts  # Estado + llamadas a services
+```
+
+- **ESLint** flat config igual que Festiva (`eslint.config.js`).
+- Las páginas nuevas: lógica en `hooks/useXxxPage.ts`, componente delgado.
+- No usar `lib/api.ts` (eliminado); usar `src/api/*.service.ts`.
+
 ## Desarrollo
 
 Desde la raíz del monorepo:

@@ -1,9 +1,9 @@
-import { get, post, ErrorApi } from '@/lib/api';
+import { ErrorApi } from '@/api/http.client';
+import { campoService } from '@/api/campo/campo.service';
 import { db, type AsignacionLocal, type FormularioLocal } from '@/lib/fotos/db';
 import type {
   AsignacionCampo,
   FormularioCampoPayload,
-  GuardarFormularioResponse,
   MisAsignacionesResponse,
 } from '@/types/campo';
 
@@ -69,7 +69,7 @@ export async function sincronizarCampo() {
     for (const f of pendientes) {
       try {
         const { pendiente: _p, guardado_en: _g, error_sync: _e, ...cuerpo } = f;
-        await post<GuardarFormularioResponse>('/campo/formularios', cuerpo);
+        await campoService.guardarFormulario(cuerpo);
         await db.formularios.update(f.uuid, { pendiente: 0, error_sync: undefined });
       } catch (err) {
         if (
@@ -104,7 +104,7 @@ function reconstruirDesdeCache(cached: AsignacionLocal[]): MisAsignacionesRespon
 /** Descarga asignaciones y las cachea; sin señal devuelve la copia local. */
 export async function refrescarAsignacionesCampo(): Promise<MisAsignacionesResponse> {
   try {
-    const r = await get<MisAsignacionesResponse>('/campo/mis-asignaciones');
+    const r = await campoService.misAsignaciones();
     await db.asignaciones.clear();
     for (const a of [...r.activas, ...r.historial]) {
       const fila: AsignacionLocal = {

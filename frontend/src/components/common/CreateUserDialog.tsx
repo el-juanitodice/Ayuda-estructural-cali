@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { post } from '@/lib/api';
+import { adminService } from '@/api/admin/admin.service';
 import type { Rol } from '@/types/auth';
 import type { CrearUsuarioResponse } from '@/types/admin';
 
@@ -59,7 +59,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreado }: CreateUserDia
     setError(null);
     setEnviando(true);
     try {
-      const r = await post<CrearUsuarioResponse>('/admin/usuarios', {
+      const r = await adminService.crearUsuario({
         email: form.email,
         nombre: form.nombre,
         rol: form.rol,
