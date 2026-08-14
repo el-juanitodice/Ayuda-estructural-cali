@@ -1,8 +1,9 @@
 import { ArrowLeft, Phone, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { pageHeaders } from '@/constants/page-headers';
 import {
   puedeAsignarModeracion,
   useModerationPage,
@@ -127,26 +129,30 @@ function DetalleReporte({
   } = useModerationDetalle(reporte, onActualizado);
 
   return (
-    <Card>
-      <CardHeader>
-        <Button variant="ghost" size="sm" className="mb-2 w-fit" onClick={onVolver}>
-          <ArrowLeft className="size-4" />
-          Volver a la cola
-        </Button>
-        <CardTitle>
-          {reporte.consecutivo} — {reporte.direccion}
-        </CardTitle>
-        <CardDescription className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}</Badge>
-          {reporte.menciona_colapso && (
-            <span className="font-semibold text-destructive">
-              <ShieldAlert className="mr-1 inline size-4" />
-              Posible emergencia
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <Button variant="ghost" size="sm" className="w-fit" onClick={onVolver}>
+        <ArrowLeft className="size-4" />
+        Volver a la cola
+      </Button>
+
+      <PageHeader
+        eyebrow={pageHeaders.moderacion.eyebrow}
+        title={`${reporte.consecutivo} — ${reporte.direccion}`}
+        description={
+          <span className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{ETIQUETA_ESTADO[reporte.estado] ?? reporte.estado}</Badge>
+            {reporte.menciona_colapso && (
+              <span className="font-semibold text-destructive">
+                <ShieldAlert className="mr-1 inline size-4" />
+                Posible emergencia
+              </span>
+            )}
+          </span>
+        }
+      />
+
+      <Card>
+        <CardContent className="space-y-4 pt-6">
         <p>
           <strong>Llamar a:</strong> {reporte.reportante_nombre} —{' '}
           <a href={`tel:${reporte.reportante_telefono}`} className="text-primary underline-offset-4 hover:underline">
@@ -253,6 +259,7 @@ function DetalleReporte({
         {error && <p className="text-sm font-medium text-destructive">{error}</p>}
       </CardContent>
     </Card>
+    </div>
   );
 }
 
@@ -418,19 +425,18 @@ export function ModerationPage() {
   const vacio = enCola.length === 0 && historial.length === 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Moderación</h1>
-          <p className="text-sm text-muted-foreground">
-            Nuevos arriba; procesados en gris abajo. Valida tras llamar al reportante.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => void cargarCola()} disabled={cargando}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={pageHeaders.moderacion.eyebrow}
+        title={pageHeaders.moderacion.title}
+        description={pageHeaders.moderacion.description}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => void cargarCola()} disabled={cargando}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 

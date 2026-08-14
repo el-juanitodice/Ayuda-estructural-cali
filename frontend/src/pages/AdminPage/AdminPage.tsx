@@ -2,9 +2,11 @@ import { UserPlus } from 'lucide-react';
 import { CreateUserDialog } from '@/components/common/CreateUserDialog';
 import { DeleteUserDialog } from '@/components/common/DeleteUserDialog';
 import { EditUserDialog } from '@/components/common/EditUserDialog';
+import { PageHeader } from '@/components/common/PageHeader';
 import { UsersList } from '@/components/common/UsersList';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { pageHeaders } from '@/constants/page-headers';
 import { useAdminPage } from '@/pages/AdminPage/hooks/useAdminPage';
 
 export function AdminPage() {
@@ -25,20 +27,25 @@ export function AdminPage() {
   } = useAdminPage();
 
   return (
-    <div className="w-full space-y-3">
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="min-w-0">
-            <CardTitle className="text-base">Usuarios ({usuarios.length})</CardTitle>
-            <p className="text-xs text-muted-foreground">Cuentas del personal — solo administradores</p>
-          </div>
+    <div className="w-full space-y-6">
+      <PageHeader
+        eyebrow={pageHeaders.admin.eyebrow}
+        title={pageHeaders.admin.title}
+        description={pageHeaders.admin.description}
+        actions={
           <Button size="sm" className="w-full shrink-0 sm:w-auto" onClick={() => setDialogCrearAbierto(true)}>
             <UserPlus className="size-4" />
             Nueva cuenta
           </Button>
-        </CardHeader>
+        }
+      />
+
+      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+
+      <Card>
+        <CardContent className="border-b px-4 py-3 text-base font-medium">
+          Usuarios ({usuarios.length})
+        </CardContent>
         <CardContent className="p-0">
           {isLoading ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">Cargando usuarios…</p>

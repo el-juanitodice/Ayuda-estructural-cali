@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 interface PageHeaderProps {
   eyebrow?: string;
   title: string;
-  description?: string;
+  description?: ReactNode;
   actions?: ReactNode;
   /** Cabecera fija; el scroll ocurre en el contenido debajo (requiere contenedor flex). */
   pinned?: boolean;
@@ -30,7 +30,7 @@ export function PageHeader({ eyebrow, title, description, actions, pinned, class
           {title}
         </h1>
         {description && (
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+          <div className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</div>
         )}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}

@@ -3,6 +3,7 @@ import { ArrowLeft, WifiOff } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { SISTEMAS_ESTRUCTURALES, elementosEstructurales } from '@shared/ais.js';
 import { DamageMatrix } from '@/components/campo/DamageMatrix';
+import { PageHeader } from '@/components/common/PageHeader';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { pageHeaders } from '@/constants/page-headers';
 import { campoService } from '@/api/campo/campo.service';
 import {
   cacheFormularioServidor,
@@ -289,45 +291,45 @@ export function FieldCaptureForm({
         Mis asignaciones
       </Button>
 
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {asignacion.consecutivo} — {asignacion.direccion}
-        </h1>
-        {asignacion.descripcion && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Reporte ciudadano: “{asignacion.descripcion}”
-          </p>
-        )}
-        {(sinConexion || pendienteSync) && asignacion.editable && (
-          <Alert className="mt-3 border-amber-300 bg-amber-50 text-amber-950">
-            <WifiOff className="size-4" />
-            <AlertDescription>
-              {sinConexion
-                ? 'Sin conexión — los cambios se guardan en este dispositivo y se suben al reconectar.'
-                : 'Hay cambios pendientes de sincronizar con el servidor.'}
-            </AlertDescription>
-          </Alert>
-        )}
-        {form.estado === 'firmado' && (
-          <Alert className="mt-3">
-            <AlertDescription>
-              Dictamen firmado — captura de solo lectura. Consulta el aviso desde Revisión.
-            </AlertDescription>
-          </Alert>
-        )}
-        {capturaEnRevision && (
-          <Alert className="mt-3 border-amber-300 bg-amber-50 text-amber-950">
-            <AlertDescription>
-              En revisión nivel A. Puedes corregir la captura mientras no haya dictamen firmado.
-            </AlertDescription>
-          </Alert>
-        )}
-        {soloLectura && form.estado === 'capturado' && !capturaEnRevision && (
-          <Alert className="mt-3">
-            <AlertDescription>Captura cerrada — solo lectura.</AlertDescription>
-          </Alert>
-        )}
-      </div>
+      <PageHeader
+        eyebrow={pageHeaders.campo.eyebrow}
+        title={`${asignacion.consecutivo} — ${asignacion.direccion}`}
+        description={
+          asignacion.descripcion
+            ? `Reporte ciudadano: “${asignacion.descripcion}”`
+            : 'Completa la captura de campo para este predio.'
+        }
+      />
+
+      {(sinConexion || pendienteSync) && asignacion.editable && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950">
+          <WifiOff className="size-4" />
+          <AlertDescription>
+            {sinConexion
+              ? 'Sin conexión — los cambios se guardan en este dispositivo y se suben al reconectar.'
+              : 'Hay cambios pendientes de sincronizar con el servidor.'}
+          </AlertDescription>
+        </Alert>
+      )}
+      {form.estado === 'firmado' && (
+        <Alert>
+          <AlertDescription>
+            Dictamen firmado — captura de solo lectura. Consulta el aviso desde Revisión.
+          </AlertDescription>
+        </Alert>
+      )}
+      {capturaEnRevision && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950">
+          <AlertDescription>
+            En revisión nivel A. Puedes corregir la captura mientras no haya dictamen firmado.
+          </AlertDescription>
+        </Alert>
+      )}
+      {soloLectura && form.estado === 'capturado' && !capturaEnRevision && (
+        <Alert>
+          <AlertDescription>Captura cerrada — solo lectura.</AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>

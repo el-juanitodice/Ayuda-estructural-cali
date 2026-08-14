@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ClipboardCheck, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import {
   ETIQUETA_HABITABILIDAD,
   HABITABILIDAD,
@@ -35,6 +36,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { routes } from '@/constants/routes';
+import { pageHeaders } from '@/constants/page-headers';
 import { useReviewDetalle } from '@/pages/ReviewPage/hooks/useReviewDetalle';
 import { useReviewPage } from '@/pages/ReviewPage/hooks/useReviewPage';
 import type {
@@ -208,24 +210,19 @@ function DetalleRevision({
         Cola de revisión
       </Button>
 
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {f.consecutivo} — {f.direccion || f.reporte_direccion}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Captura de campo: {item.capturado_por_nombre ?? '—'} (matrícula{' '}
-          {item.capturado_por_matricula ?? '—'}) ·{' '}
-          {f.visita_presencial_b ? 'con visita presencial' : 'sin visita presencial'} ·{' '}
-          {f.capturado_en ? formatearFecha(f.capturado_en) : '—'}
-        </p>
+      <PageHeader
+        eyebrow={pageHeaders.revision.eyebrow}
+        title={`${f.consecutivo} — ${f.direccion || f.reporte_direccion}`}
+        description={`Captura de campo: ${item.capturado_por_nombre ?? '—'} (matrícula ${item.capturado_por_matricula ?? '—'}) · ${f.visita_presencial_b ? 'con visita presencial' : 'sin visita presencial'} · ${f.capturado_en ? formatearFecha(f.capturado_en) : '—'}`}
+      />
+
         {f.requiere_nivel_a && f.motivo_escalacion.length > 0 && (
-          <Alert className="mt-3 border-amber-300 bg-amber-50 text-amber-950">
+          <Alert className="border-amber-300 bg-amber-50 text-amber-950">
             <AlertDescription>
               Escalado: {f.motivo_escalacion.join(', ')}
             </AlertDescription>
           </Alert>
         )}
-      </div>
 
       <Collapsible defaultOpen>
         <Card>
@@ -503,18 +500,17 @@ export function ReviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Revisión nivel A</h1>
-          <p className="text-sm text-muted-foreground">
-            Pendientes arriba; abajo el historial de dictámenes firmados para consulta.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={pageHeaders.revision.eyebrow}
+        title={pageHeaders.revision.title}
+        description={pageHeaders.revision.description}
+        actions={
+          <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && (
         <Alert variant="destructive">

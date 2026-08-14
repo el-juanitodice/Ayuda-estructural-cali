@@ -1,5 +1,7 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PageHeader } from '@/components/common/PageHeader';
 import { NoticePrintCard, NoticeToolbar } from '@/components/notice/NoticePrintCard';
+import { pageHeaders } from '@/constants/page-headers';
 import { useNoticePage } from '@/pages/NoticePage/hooks/useNoticePage';
 
 export function NoticePage() {
@@ -26,7 +28,12 @@ export function NoticePage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={pageHeaders.aviso.eyebrow}
+        title={pageHeaders.aviso.title}
+        description={pageHeaders.aviso.description}
+      />
       <NoticeToolbar />
       <NoticePrintCard formulario={formulario} qr={qr} color={color} />
     </div>

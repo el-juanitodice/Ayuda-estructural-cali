@@ -2,6 +2,7 @@ import { Emergency123Dialog } from '@/components/report/Emergency123Dialog';
 import { ReportDetailsPanel } from '@/components/report/ReportDetailsPanel';
 import { ReportSituationPanel } from '@/components/report/ReportSituationPanel';
 import { PageHeader } from '@/components/common/PageHeader';
+import { pageHeaders } from '@/constants/page-headers';
 import { Form } from '@/components/ui/form';
 import { useReportPage } from '@/pages/ReportPage/hooks/useReportPage';
 
@@ -26,9 +27,9 @@ export function ReportPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PageHeader
         pinned
-        eyebrow="Ciudadanía"
-        title="Reportar daños"
-        description="Describe la situación del predio y marca su ubicación. Un moderador te llamará para confirmar los datos."
+        eyebrow={pageHeaders.reportar.eyebrow}
+        title={pageHeaders.reportar.title}
+        description={pageHeaders.reportar.description}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto pt-4">

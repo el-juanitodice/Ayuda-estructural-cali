@@ -1,4 +1,5 @@
 import { RefreshCw, WifiOff } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import { FieldCaptureForm } from '@/components/campo/FieldCaptureForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { pageHeaders } from '@/constants/page-headers';
 import { useFieldPage } from '@/pages/FieldPage/hooks/useFieldPage';
 import type { AsignacionCampo } from '@/types/campo';
 
@@ -179,19 +181,17 @@ export function FieldPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Inspección de campo</h1>
-          <p className="text-sm text-muted-foreground">
-            Casos activos arriba; abajo puedes consultar capturas anteriores y corregirlas mientras sigan en
-            revisión.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={pageHeaders.campo.eyebrow}
+        title={pageHeaders.campo.title}
+        description={pageHeaders.campo.description}
+        actions={
+          <Button variant="outline" size="sm" onClick={cargar} disabled={cargando}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        }
+      />
 
       {desdeCache && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-950">

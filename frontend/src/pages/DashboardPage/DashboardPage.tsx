@@ -1,4 +1,5 @@
-import { Download, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { CLASE_COLOR, ETIQUETA_COLOR } from '@/constants/reportStatus';
 import { COLORES_MAPA } from '@/constants/map';
+import { pageHeaders } from '@/constants/page-headers';
 import { cn } from '@/lib/utils';
 import { useDashboardPage } from '@/pages/DashboardPage/hooks/useDashboardPage';
 import type { ColorHabitabilidad } from '@/types/report';
@@ -82,22 +84,23 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <LayoutDashboard className="size-5 text-primary" />
-          <h1 className="text-lg font-semibold">Tablero de coordinación</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" size="sm" onClick={() => void cargar()} disabled={cargando}>
-            <RefreshCw className={cn('size-4', cargando && 'animate-spin')} />
-            Actualizar
-          </Button>
-          <Button type="button" size="sm" onClick={() => void exportarCsv()} disabled={exportando}>
-            <Download className="size-4" />
-            {exportando ? 'Exportando…' : 'Exportar CSV'}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={pageHeaders.tablero.eyebrow}
+        title={pageHeaders.tablero.title}
+        description={pageHeaders.tablero.description}
+        actions={
+          <>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void cargar()} disabled={cargando}>
+              <RefreshCw className={cn('size-4', cargando && 'animate-spin')} />
+              Actualizar
+            </Button>
+            <Button type="button" size="sm" onClick={() => void exportarCsv()} disabled={exportando}>
+              <Download className="size-4" />
+              {exportando ? 'Exportando…' : 'Exportar CSV'}
+            </Button>
+          </>
+        }
+      />
 
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 

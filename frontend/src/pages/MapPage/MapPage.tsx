@@ -4,6 +4,7 @@ import { MapLegend } from '@/components/map/MapLegend';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { pageHeaders } from '@/constants/page-headers';
 import { ui } from '@/constants/styles';
 import { routes } from '@/constants/routes';
 import { useConsultReport } from '@/contexts/ConsultReportContext';
@@ -17,9 +18,9 @@ export function MapPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
-        eyebrow="Post-sísmico · Cali"
-        title="Mapa de inspecciones"
-        description="Consulta el estado de dictámenes por zona. Los puntos aparecen tras validación telefónica por un moderador."
+        eyebrow={pageHeaders.mapa.eyebrow}
+        title={pageHeaders.mapa.title}
+        description={pageHeaders.mapa.description}
         actions={
           <>
             <Button asChild size="sm" className="gap-2 shadow-sm">
@@ -40,7 +41,6 @@ export function MapPage() {
             </Button>
           </>
         }
-        className="mb-4 border-none pb-0 sm:mb-5"
       />
 
       {error && (
