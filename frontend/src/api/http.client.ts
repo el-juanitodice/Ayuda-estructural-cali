@@ -83,6 +83,7 @@ async function pedir<T>(metodo: string, ruta: string, datos?: unknown): Promise<
 export const httpClient = {
   get: <T>(ruta: string) => pedir<T>('GET', ruta),
   post: <T>(ruta: string, datos?: unknown) => pedir<T>('POST', ruta, datos),
+  put: <T>(ruta: string, datos?: unknown) => pedir<T>('PUT', ruta, datos),
   patch: <T>(ruta: string, datos?: unknown) => pedir<T>('PATCH', ruta, datos),
   delete: <T>(ruta: string) => pedir<T>('DELETE', ruta),
 

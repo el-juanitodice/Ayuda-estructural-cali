@@ -45,8 +45,8 @@ export const pageHeaders = {
   },
   admin: {
     eyebrow: 'Administración',
-    title: 'Usuarios del sistema',
-    description: 'Cuentas del personal con acceso al panel.',
+    title: 'Panel de administración',
+    description: 'Gestiona cuentas del personal y los permisos por rol.',
   },
   aviso: {
     eyebrow: 'Dictamen',
