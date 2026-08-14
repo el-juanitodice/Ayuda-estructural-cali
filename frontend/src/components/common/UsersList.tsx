@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
+import { DesktopTable, MobileDataList } from '@/components/common/ResponsiveTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -93,14 +94,13 @@ export function UsersList({
 
   return (
     <>
-      {/* Móvil: tarjetas apiladas */}
-      <ul className="divide-y md:hidden">
+      <MobileDataList inset>
         {usuarios.map((u) => {
           const esYo = u.uuid === usuarioActualUuid;
           const puedeEliminar = u.activo && !esYo;
 
           return (
-            <li key={u.uuid} className="px-4 py-3">
+            <li key={u.uuid}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="truncate font-medium" title={u.nombre}>
@@ -128,19 +128,18 @@ export function UsersList({
             </li>
           );
         })}
-      </ul>
+      </MobileDataList>
 
-      {/* Desktop: tabla */}
-      <div className="hidden overflow-x-auto md:block">
-        <Table className="w-full min-w-[720px] text-sm">
+      <DesktopTable>
+        <Table className="min-w-[720px]">
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="h-10 px-4">Nombre</TableHead>
-              <TableHead className="h-10 px-4">Correo</TableHead>
-              <TableHead className="h-10 px-4">Rol</TableHead>
-              <TableHead className="h-10 px-4">Estado</TableHead>
-              <TableHead className="h-10 px-4">Último acceso</TableHead>
-              <TableHead className="h-10 w-[88px] px-4 text-right">Acciones</TableHead>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Correo</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Último acceso</TableHead>
+              <TableHead className="w-[88px] text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -150,26 +149,24 @@ export function UsersList({
 
               return (
                 <TableRow key={u.uuid}>
-                  <TableCell className="max-w-[140px] px-4 py-3 font-medium">
+                  <TableCell className="max-w-[140px] font-medium">
                     <span className="block truncate" title={u.nombre}>
                       {u.nombre}
                     </span>
                   </TableCell>
-                  <TableCell className="max-w-[200px] px-4 py-3">
+                  <TableCell className="max-w-[200px]">
                     <span className="block truncate text-muted-foreground" title={u.email}>
                       {u.email}
                     </span>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap px-4 py-3">
-                    {ETIQUETAS_ROL[u.rol]}
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="whitespace-nowrap">{ETIQUETAS_ROL[u.rol]}</TableCell>
+                  <TableCell>
                     <EstadoUsuario usuario={u} />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatearFecha(u.ultimo_acceso)}
                   </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="text-right">
                     <div className="flex justify-end">
                       <AccionesUsuario
                         usuario={u}
@@ -184,7 +181,7 @@ export function UsersList({
             })}
           </TableBody>
         </Table>
-      </div>
+      </DesktopTable>
     </>
   );
 }

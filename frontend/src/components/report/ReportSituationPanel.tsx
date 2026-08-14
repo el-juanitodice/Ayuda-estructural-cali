@@ -32,9 +32,9 @@ export function ReportSituationPanel({ form, fotos, onFotosChange, enviando }: R
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-4 pt-4">
-        <Alert variant="warning" className="py-2">
-          <AlertTriangle className="size-4" />
-          <AlertDescription className="text-xs">
+        <Alert variant="warning" className="items-center py-2.5">
+          <AlertTriangle className="size-4 shrink-0" />
+          <AlertDescription className="text-xs leading-snug">
             Si hay personas atrapadas, colapso, incendio u olor a gas,{' '}
             <a href="tel:123" className="font-semibold underline">
               llama al 123

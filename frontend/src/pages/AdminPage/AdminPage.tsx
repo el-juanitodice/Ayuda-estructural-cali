@@ -44,12 +44,12 @@ export function AdminPage() {
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
       <Card>
-        <CardContent className="border-b px-4 py-3 text-base font-medium">
+        <CardContent className="border-b px-6 py-3 text-base font-medium">
           Usuarios ({usuarios.length})
         </CardContent>
-        <CardContent className="p-0">
+        <CardContent className="px-6 pb-4 pt-0">
           {isLoading ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Cargando usuarios…</p>
+            <p className="py-6 text-sm text-muted-foreground">Cargando usuarios…</p>
           ) : (
             <UsersList
               usuarios={usuarios}

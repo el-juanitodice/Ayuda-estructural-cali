@@ -1,5 +1,6 @@
 import { Download, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
+import { DesktopTable, MobileDataList } from '@/components/common/ResponsiveTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +43,7 @@ function TarjetaCoberturaComuna({
   cerrados: number;
 }) {
   return (
-    <li className="px-4 py-3">
+    <li>
       <p className="font-medium">{comuna}</p>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div className="flex justify-between gap-2">
@@ -140,19 +141,19 @@ export function DashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Cobertura por comuna</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="px-6 pb-4 pt-0">
               {cobertura.por_comuna.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                <p className="py-6 text-center text-sm text-muted-foreground">
                   Sin reportes todavía
                 </p>
               ) : (
                 <>
-                  <ul className="divide-y md:hidden">
+                  <MobileDataList inset>
                     {cobertura.por_comuna.map((c) => (
                       <TarjetaCoberturaComuna key={c.comuna} {...c} />
                     ))}
-                  </ul>
-                  <div className="hidden overflow-x-auto md:block">
+                  </MobileDataList>
+                  <DesktopTable>
                     <Table className="min-w-[560px]">
                       <TableHeader>
                         <TableRow>
@@ -175,7 +176,7 @@ export function DashboardPage() {
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
+                  </DesktopTable>
                 </>
               )}
             </CardContent>
@@ -188,26 +189,58 @@ export function DashboardPage() {
                   Asignaciones por vencer ({vencimientos.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6 pb-4 pt-0">
                 {vencimientos.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay asignaciones abiertas.</p>
+                  <p className="py-6 text-sm text-muted-foreground">No hay asignaciones abiertas.</p>
                 ) : (
-                  <ul className="max-h-80 space-y-3 overflow-y-auto text-sm">
-                    {vencimientos.map((v) => (
-                      <li key={`${v.consecutivo}-${v.vence_en}`} className="rounded-md border p-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono font-semibold">{v.consecutivo}</span>
-                          <span className="text-muted-foreground">· {v.ingeniero}</span>
-                          <Badge variant="secondary">Ing. {etiquetaNivel(v.nivel)}</Badge>
-                          {v.vencida && <Badge variant="destructive">Vencida</Badge>}
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Vence {formatearFecha(v.vence_en)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{v.direccion}</p>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="max-h-80 space-y-3 overflow-y-auto text-sm md:hidden">
+                      {vencimientos.map((v) => (
+                        <li key={`${v.consecutivo}-${v.vence_en}`} className="rounded-md border p-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono font-semibold">{v.consecutivo}</span>
+                            <span className="text-muted-foreground">· {v.ingeniero}</span>
+                            <Badge variant="secondary">Ing. {etiquetaNivel(v.nivel)}</Badge>
+                            {v.vencida && <Badge variant="destructive">Vencida</Badge>}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Vence {formatearFecha(v.vence_en)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{v.direccion}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    <DesktopTable>
+                      <Table className="min-w-[640px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Radicado</TableHead>
+                            <TableHead>Ingeniero</TableHead>
+                            <TableHead>Vence</TableHead>
+                            <TableHead>Dirección</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {vencimientos.map((v) => (
+                            <TableRow key={`${v.consecutivo}-${v.vence_en}`}>
+                              <TableCell className="font-mono font-semibold">{v.consecutivo}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span>{v.ingeniero}</span>
+                                  <Badge variant="secondary">Ing. {etiquetaNivel(v.nivel)}</Badge>
+                                  {v.vencida && <Badge variant="destructive">Vencida</Badge>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                                {formatearFecha(v.vence_en)}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{v.direccion}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </DesktopTable>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -221,40 +254,83 @@ export function DashboardPage() {
                   Color firmado distinto del sugerido, con justificación. Cola de revisión de calidad.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-6 pb-4 pt-0">
                 {discrepancias.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sin discrepancias registradas.</p>
+                  <p className="py-6 text-sm text-muted-foreground">Sin discrepancias registradas.</p>
                 ) : (
-                  <ul className="max-h-80 space-y-3 overflow-y-auto text-sm">
-                    {discrepancias.map((d) => (
-                      <li key={d.formulario_uuid} className="rounded-md border p-3">
-                        <p>
-                          <span className="font-mono font-semibold">{d.consecutivo}</span>
-                          {' · sugerido '}
-                          <span
-                            className="inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
-                            style={{ backgroundColor: COLORES_MAPA[d.sugerida as ColorHabitabilidad] }}
-                          >
-                            {d.sugerida}
-                          </span>
-                          {' → firmado '}
-                          <span
-                            className="inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
-                            style={{ backgroundColor: COLORES_MAPA[d.final as ColorHabitabilidad] }}
-                          >
-                            {d.final}
-                          </span>
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {d.firmado_por_nombre}
-                          {d.matricula ? ` (mat. ${d.matricula})` : ''}
-                        </p>
-                        <p className="mt-1 text-xs italic text-muted-foreground">
-                          &ldquo;{d.motivo_discrepancia}&rdquo;
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="max-h-80 space-y-3 overflow-y-auto text-sm md:hidden">
+                      {discrepancias.map((d) => (
+                        <li key={d.formulario_uuid} className="rounded-md border p-3">
+                          <p>
+                            <span className="font-mono font-semibold">{d.consecutivo}</span>
+                            {' · sugerido '}
+                            <span
+                              className="inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
+                              style={{ backgroundColor: COLORES_MAPA[d.sugerida as ColorHabitabilidad] }}
+                            >
+                              {d.sugerida}
+                            </span>
+                            {' → firmado '}
+                            <span
+                              className="inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
+                              style={{ backgroundColor: COLORES_MAPA[d.final as ColorHabitabilidad] }}
+                            >
+                              {d.final}
+                            </span>
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {d.firmado_por_nombre}
+                            {d.matricula ? ` (mat. ${d.matricula})` : ''}
+                          </p>
+                          <p className="mt-1 text-xs italic text-muted-foreground">
+                            &ldquo;{d.motivo_discrepancia}&rdquo;
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                    <DesktopTable>
+                      <Table className="min-w-[720px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Radicado</TableHead>
+                            <TableHead>Sugerido → Firmado</TableHead>
+                            <TableHead>Firmado por</TableHead>
+                            <TableHead>Motivo</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {discrepancias.map((d) => (
+                            <TableRow key={d.formulario_uuid}>
+                              <TableCell className="font-mono font-semibold">{d.consecutivo}</TableCell>
+                              <TableCell>
+                                <span
+                                  className="mr-1 inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
+                                  style={{ backgroundColor: COLORES_MAPA[d.sugerida as ColorHabitabilidad] }}
+                                >
+                                  {d.sugerida}
+                                </span>
+                                →
+                                <span
+                                  className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-bold text-white"
+                                  style={{ backgroundColor: COLORES_MAPA[d.final as ColorHabitabilidad] }}
+                                >
+                                  {d.final}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {d.firmado_por_nombre}
+                                {d.matricula ? ` (mat. ${d.matricula})` : ''}
+                              </TableCell>
+                              <TableCell className="max-w-xs text-sm italic text-muted-foreground">
+                                &ldquo;{d.motivo_discrepancia}&rdquo;
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </DesktopTable>
+                  </>
                 )}
               </CardContent>
             </Card>

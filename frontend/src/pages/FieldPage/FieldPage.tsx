@@ -1,5 +1,6 @@
 import { RefreshCw, WifiOff } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
+import { DesktopTable, MobileDataList } from '@/components/common/ResponsiveTable';
 import { FieldCaptureForm } from '@/components/campo/FieldCaptureForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -67,9 +68,9 @@ function TablaAsignaciones({
 
   return (
     <>
-      <ul className={`divide-y md:hidden ${atenuada ? 'text-muted-foreground' : ''}`}>
+      <MobileDataList inset className={atenuada ? 'text-muted-foreground' : undefined}>
         {items.map((a) => (
-          <li key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`} className="px-4 py-3">
+          <li key={`${a.reporte_uuid}-${a.formulario_uuid ?? 'nuevo'}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -102,9 +103,9 @@ function TablaAsignaciones({
             </div>
           </li>
         ))}
-      </ul>
+      </MobileDataList>
 
-      <div className="hidden overflow-x-auto md:block">
+      <DesktopTable>
         <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
@@ -148,7 +149,7 @@ function TablaAsignaciones({
             ))}
           </TableBody>
         </Table>
-      </div>
+      </DesktopTable>
     </>
   );
 }
@@ -222,8 +223,10 @@ export function FieldPage() {
           {activas.length > 0 && (
             <Card>
               <CardContent className="p-0">
-                <div className="border-b px-4 py-2 text-sm font-medium">Activas ({activas.length})</div>
-                <TablaAsignaciones items={activas} onAbrir={setAbierta} />
+                <div className="border-b px-6 py-2 text-sm font-medium">Activas ({activas.length})</div>
+                <div className="px-6 pb-4">
+                  <TablaAsignaciones items={activas} onAbrir={setAbierta} />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -239,10 +242,12 @@ export function FieldPage() {
           {historial.length > 0 && (
             <Card>
               <CardContent className="p-0">
-                <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium text-muted-foreground">
+                <div className="border-b bg-muted/30 px-6 py-2 text-sm font-medium text-muted-foreground">
                   Historial ({historial.length})
                 </div>
-                <TablaAsignaciones items={historial} atenuada onAbrir={setAbierta} />
+                <div className="px-6 pb-4">
+                  <TablaAsignaciones items={historial} atenuada onAbrir={setAbierta} />
+                </div>
               </CardContent>
             </Card>
           )}

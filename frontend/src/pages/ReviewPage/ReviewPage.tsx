@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ClipboardCheck, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
+import { DesktopTable, MobileDataList } from '@/components/common/ResponsiveTable';
 import {
   ETIQUETA_HABITABILIDAD,
   HABITABILIDAD,
@@ -72,7 +73,7 @@ function TarjetaRevisionPendiente({
   onAbrir: () => void;
 }) {
   return (
-    <li className="px-4 py-3">
+    <li>
       <div className="space-y-1">
         <p className="font-mono font-medium">{item.consecutivo}</p>
         <p className="text-sm font-medium">
@@ -99,7 +100,7 @@ function TarjetaRevisionHistorial({
   onAbrir: () => void;
 }) {
   return (
-    <li className="px-4 py-3 text-muted-foreground">
+    <li className="text-muted-foreground">
       <div className="space-y-1">
         <p className="font-mono font-medium text-foreground">{item.consecutivo}</p>
         <p className="text-sm">
@@ -117,8 +118,7 @@ function TarjetaRevisionHistorial({
           )}
         </div>
         <p className="text-xs">
-          {item.firmado_por_nombre ?? '—'} ·{' '}
-          {formatearFecha(item.firmado_en ?? item.capturado_en)}
+          {item.firmado_por_nombre ?? '—'} · {formatearFecha(item.firmado_en ?? item.capturado_en)}
         </p>
       </div>
       <Button size="sm" variant="outline" className="mt-3 w-full sm:w-auto" onClick={onAbrir}>
@@ -526,50 +526,52 @@ export function ReviewPage() {
           {pendientes.length > 0 ? (
             <Card>
               <CardContent className="p-0">
-                <div className="border-b px-4 py-2 text-sm font-medium">
+                <div className="border-b px-6 py-2 text-sm font-medium">
                   Pendientes de firma ({pendientes.length})
                 </div>
-                <ul className="divide-y md:hidden">
-                  {pendientes.map((item) => (
-                    <TarjetaRevisionPendiente
-                      key={item.formulario_uuid}
-                      item={item}
-                      onAbrir={() => setAbierto(item)}
-                    />
-                  ))}
-                </ul>
-                <div className="hidden overflow-x-auto md:block">
-                  <Table className="min-w-[720px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Radicado</TableHead>
-                        <TableHead>Dirección</TableHead>
-                        <TableHead>Comuna</TableHead>
-                        <TableHead>Capturado por</TableHead>
-                        <TableHead>Fecha captura</TableHead>
-                        <TableHead />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendientes.map((item) => (
-                        <TableRow key={item.formulario_uuid}>
-                          <TableCell className="font-medium">{item.consecutivo}</TableCell>
-                          <TableCell>
-                            {item.direccion}
-                            {item.barrio ? ` · ${item.barrio}` : ''}
-                          </TableCell>
-                          <TableCell>{item.comuna ?? '—'}</TableCell>
-                          <TableCell>{item.capturado_por_nombre ?? '—'}</TableCell>
-                          <TableCell>{formatearFecha(item.capturado_en)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" onClick={() => setAbierto(item)}>
-                              Revisar
-                            </Button>
-                          </TableCell>
+                <div className="px-6 pb-4">
+                  <MobileDataList inset>
+                    {pendientes.map((item) => (
+                      <TarjetaRevisionPendiente
+                        key={item.formulario_uuid}
+                        item={item}
+                        onAbrir={() => setAbierto(item)}
+                      />
+                    ))}
+                  </MobileDataList>
+                  <DesktopTable>
+                    <Table className="min-w-[720px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Radicado</TableHead>
+                          <TableHead>Dirección</TableHead>
+                          <TableHead>Comuna</TableHead>
+                          <TableHead>Capturado por</TableHead>
+                          <TableHead>Fecha captura</TableHead>
+                          <TableHead />
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {pendientes.map((item) => (
+                          <TableRow key={item.formulario_uuid}>
+                            <TableCell className="font-medium">{item.consecutivo}</TableCell>
+                            <TableCell>
+                              {item.direccion}
+                              {item.barrio ? ` · ${item.barrio}` : ''}
+                            </TableCell>
+                            <TableCell>{item.comuna ?? '—'}</TableCell>
+                            <TableCell>{item.capturado_por_nombre ?? '—'}</TableCell>
+                            <TableCell>{formatearFecha(item.capturado_en)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" onClick={() => setAbierto(item)}>
+                                Revisar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </DesktopTable>
                 </div>
               </CardContent>
             </Card>
@@ -586,59 +588,61 @@ export function ReviewPage() {
           {historial.length > 0 && (
             <Card>
               <CardContent className="p-0">
-                <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium text-muted-foreground">
+                <div className="border-b bg-muted/30 px-6 py-2 text-sm font-medium text-muted-foreground">
                   Historial de dictámenes ({historial.length})
                 </div>
-                <ul className="divide-y md:hidden">
-                  {historial.map((item) => (
-                    <TarjetaRevisionHistorial
-                      key={item.formulario_uuid}
-                      item={item}
-                      onAbrir={() => setAbierto(item)}
-                    />
-                  ))}
-                </ul>
-                <div className="hidden overflow-x-auto md:block">
-                  <Table className="min-w-[720px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Radicado</TableHead>
-                        <TableHead>Dirección</TableHead>
-                        <TableHead>Dictamen</TableHead>
-                        <TableHead>Firmado por</TableHead>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead />
+                <div className="px-6 pb-4">
+                  <MobileDataList inset>
+                    {historial.map((item) => (
+                      <TarjetaRevisionHistorial
+                        key={item.formulario_uuid}
+                        item={item}
+                        onAbrir={() => setAbierto(item)}
+                      />
+                    ))}
+                  </MobileDataList>
+                  <DesktopTable>
+                <Table className="min-w-[720px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Radicado</TableHead>
+                      <TableHead>Dirección</TableHead>
+                      <TableHead>Dictamen</TableHead>
+                      <TableHead>Firmado por</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {historial.map((item) => (
+                      <TableRow key={item.formulario_uuid} className="text-muted-foreground">
+                        <TableCell className="font-medium">{item.consecutivo}</TableCell>
+                        <TableCell>
+                          {item.direccion}
+                          {item.barrio ? ` · ${item.barrio}` : ''}
+                        </TableCell>
+                        <TableCell>
+                          {item.habitabilidad_final ? (
+                            <HabitabilidadBadge
+                              color={item.habitabilidad_final}
+                              etiqueta={ETIQUETA_HABITABILIDAD[item.habitabilidad_final]}
+                            />
+                          ) : (
+                            '—'
+                          )}
+                        </TableCell>
+                        <TableCell>{item.firmado_por_nombre ?? '—'}</TableCell>
+                        <TableCell>{formatearFecha(item.firmado_en ?? item.capturado_en)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="outline" onClick={() => setAbierto(item)}>
+                            Ver dictamen
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {historial.map((item) => (
-                        <TableRow key={item.formulario_uuid} className="text-muted-foreground">
-                          <TableCell className="font-medium">{item.consecutivo}</TableCell>
-                          <TableCell>
-                            {item.direccion}
-                            {item.barrio ? ` · ${item.barrio}` : ''}
-                          </TableCell>
-                          <TableCell>
-                            {item.habitabilidad_final ? (
-                              <HabitabilidadBadge
-                                color={item.habitabilidad_final}
-                                etiqueta={ETIQUETA_HABITABILIDAD[item.habitabilidad_final]}
-                              />
-                            ) : (
-                              '—'
-                            )}
-                          </TableCell>
-                          <TableCell>{item.firmado_por_nombre ?? '—'}</TableCell>
-                          <TableCell>{formatearFecha(item.firmado_en ?? item.capturado_en)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="outline" onClick={() => setAbierto(item)}>
-                              Ver dictamen
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+                  </DesktopTable>
                 </div>
               </CardContent>
             </Card>

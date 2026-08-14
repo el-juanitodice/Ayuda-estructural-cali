@@ -1,5 +1,6 @@
 import { ArrowLeft, Phone, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
+import { DesktopTable, MobileDataList } from '@/components/common/ResponsiveTable';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -333,7 +334,7 @@ function TarjetaReporteModeracion({
 
   return (
     <li
-      className={`px-4 py-3 ${atenuada ? 'text-muted-foreground opacity-70' : ''}${clickable ? ' cursor-pointer active:bg-muted/40' : ''}`}
+      className={`${atenuada ? 'text-muted-foreground opacity-70' : ''}${clickable ? ' cursor-pointer active:bg-muted/40' : ''}`}
       onClick={clickable ? onAbrir : undefined}
     >
       <div className="flex items-start justify-between gap-2">
@@ -451,8 +452,8 @@ export function ModerationPage() {
         </Card>
       ) : (
         <Card>
-          <CardContent className="p-0">
-            <ul className="divide-y md:hidden">
+          <CardContent className="px-6 py-4">
+            <MobileDataList inset>
               {enCola.map((r) => (
                 <TarjetaReporteModeracion
                   key={r.uuid}
@@ -464,7 +465,7 @@ export function ModerationPage() {
                 />
               ))}
               {historial.length > 0 && enCola.length > 0 && (
-                <li className="bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <li className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Fuera de cola ({historial.length})
                 </li>
               )}
@@ -478,53 +479,53 @@ export function ModerationPage() {
                   onEliminar={() => setReporteAEliminar(r)}
                 />
               ))}
-            </ul>
+            </MobileDataList>
 
-            <div className="hidden overflow-x-auto md:block">
-              <Table className="min-w-[720px]">
-                <TableHeader>
+            <DesktopTable>
+            <Table className="min-w-[720px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Radicado</TableHead>
+                  <TableHead>Dirección</TableHead>
+                  <TableHead>Señales</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="w-12 text-right" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {enCola.map((r) => (
+                  <FilaReporte
+                    key={r.uuid}
+                    reporte={r}
+                    atenuada={false}
+                    eliminando={eliminandoUuid === r.uuid}
+                    onAbrir={() => abrirReporte(r)}
+                    onEliminar={() => setReporteAEliminar(r)}
+                  />
+                ))}
+                {historial.length > 0 && enCola.length > 0 && (
                   <TableRow>
-                    <TableHead>Radicado</TableHead>
-                    <TableHead>Dirección</TableHead>
-                    <TableHead>Señales</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead className="w-12 text-right" />
+                    <TableCell
+                      colSpan={5}
+                      className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      Fuera de cola ({historial.length})
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {enCola.map((r) => (
-                    <FilaReporte
-                      key={r.uuid}
-                      reporte={r}
-                      atenuada={false}
-                      eliminando={eliminandoUuid === r.uuid}
-                      onAbrir={() => abrirReporte(r)}
-                      onEliminar={() => setReporteAEliminar(r)}
-                    />
-                  ))}
-                  {historial.length > 0 && enCola.length > 0 && (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell
-                        colSpan={5}
-                        className="bg-muted/40 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        Fuera de cola ({historial.length})
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {historial.map((r) => (
-                    <FilaReporte
-                      key={r.uuid}
-                      reporte={r}
-                      atenuada
-                      eliminando={eliminandoUuid === r.uuid}
-                      onAbrir={() => abrirReporte(r)}
-                      onEliminar={() => setReporteAEliminar(r)}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                )}
+                {historial.map((r) => (
+                  <FilaReporte
+                    key={r.uuid}
+                    reporte={r}
+                    atenuada
+                    eliminando={eliminandoUuid === r.uuid}
+                    onAbrir={() => abrirReporte(r)}
+                    onEliminar={() => setReporteAEliminar(r)}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+            </DesktopTable>
           </CardContent>
         </Card>
       )}

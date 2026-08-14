@@ -46,4 +46,12 @@ export const ui = {
     'border-l-2 border-amber-400 bg-primary-foreground/10 pl-[calc(0.75rem-2px)] text-primary-foreground',
   navIdle:
     'border-l-2 border-transparent text-primary-foreground/85 hover:bg-primary-foreground/10 hover:text-primary-foreground',
+  /** Focus / selección — borde fino primary (patrón Festiva) */
+  focusRing:
+    'transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/20',
+  focusRingTrigger:
+    'transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20',
+  focusOpen:
+    'data-[state=open]:border-primary data-[state=open]:ring-1 data-[state=open]:ring-primary/20',
+  selectedRing: 'border-primary ring-1 ring-primary/20',
 } as const;
