@@ -41,6 +41,20 @@ export class FotosService {
   ) {}
 
   async subir(dto: SubirFotoDto, archivos: ArchivosSubida, usuario?: UsuarioJwt) {
+    if (usuario) {
+      const puedeSubir = await this.permissionsService.roleHasPermission(
+        usuario.role_id,
+        'fotos',
+        'w',
+      );
+      if (!puedeSubir) {
+        throw new ForbiddenException({
+          error: 'permiso_insuficiente',
+          mensaje: 'No tienes permiso para subir fotos.',
+        });
+      }
+    }
+
     const existente = await this.fotosRepo.findOne({ where: { uuid: dto.uuid } });
     if (existente) {
       return { ok: true, ya_confirmada: true, uuid: dto.uuid };
@@ -177,12 +191,25 @@ export class FotosService {
     return 'jpeg';
   }
 
-  private async resolverOrigen(usuario?: UsuarioJwt): Promise<OrigenFoto> {
+  private async resolverOrigen(usuario?: UsuarioJwt): Promise<string> {
     if (!usuario) return OrigenFoto.CIUDADANO;
     const level = await this.permissionsService.getEngineeringLevel(usuario.role_id);
     if (level === 'A') return OrigenFoto.INGENIERO_A;
     if (level === 'B') return OrigenFoto.INGENIERO_B;
-    return OrigenFoto.CIUDADANO;
+    return this.slugOrigenRol(usuario.role_name);
+  }
+
+  /** Slug estable a partir del nombre del rol dinámico (ej. "Ingeniero C" → ingeniero_c). */
+  private slugOrigenRol(roleName: string | null | undefined): string {
+    if (!roleName?.trim()) return 'equipo';
+    const slug = roleName
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 50);
+    return slug || 'equipo';
   }
 
   private async resolverUsuarioId(uuid: string): Promise<string | null> {

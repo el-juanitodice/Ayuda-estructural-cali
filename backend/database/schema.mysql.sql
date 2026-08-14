@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS fotos (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   uuid CHAR(36) NOT NULL UNIQUE,
   reporte_id BIGINT NOT NULL,
-  origen ENUM('ciudadano','ingeniero_b','ingeniero_a') NOT NULL,
+  origen VARCHAR(50) NOT NULL,
   subida_por BIGINT NULL,
   categoria VARCHAR(60) NOT NULL,
   piso VARCHAR(10) NULL,

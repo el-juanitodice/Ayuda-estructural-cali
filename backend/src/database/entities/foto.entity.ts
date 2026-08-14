@@ -7,7 +7,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { OrigenFoto } from '../../common/enums/foto.enum';
 import type { ExifFoto } from '../../common/interfaces/exif-foto.interface';
 import { Reporte } from './reporte.entity';
 import { Usuario } from './usuario.entity';
@@ -24,8 +23,8 @@ export class Foto {
   @Column({ name: 'reporte_id', type: 'bigint' })
   reporteId!: string;
 
-  @Column({ type: 'enum', enum: OrigenFoto })
-  origen!: OrigenFoto;
+  @Column({ type: 'varchar', length: 50 })
+  origen!: string;
 
   @Column({ name: 'subida_por', type: 'bigint', nullable: true })
   subidaPorId!: string | null;

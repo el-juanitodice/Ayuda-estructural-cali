@@ -76,7 +76,7 @@ WHERE r.name = 'Moderador'
 INSERT INTO role_permissions (id, role_id, app_module_id, r, w, u, d)
 SELECT UUID(), r.id, m.id,
   CASE m.code WHEN 'revision' THEN 1 WHEN 'aviso' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
-  CASE m.code WHEN 'revision' THEN 1 ELSE 0 END,
+  CASE m.code WHEN 'revision' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
   CASE m.code WHEN 'revision' THEN 1 ELSE 0 END,
   0
 FROM roles r
@@ -90,7 +90,7 @@ WHERE r.name = 'Ingeniero A'
 INSERT INTO role_permissions (id, role_id, app_module_id, r, w, u, d)
 SELECT UUID(), r.id, m.id,
   CASE m.code WHEN 'campo' THEN 1 WHEN 'aviso' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
-  CASE m.code WHEN 'campo' THEN 1 ELSE 0 END,
+  CASE m.code WHEN 'campo' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
   CASE m.code WHEN 'campo' THEN 1 ELSE 0 END,
   0
 FROM roles r

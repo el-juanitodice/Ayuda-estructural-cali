@@ -33,7 +33,7 @@ export class FotosController {
 
   /**
    * Sube full + thumb en una sola petición multipart.
-   * En BD solo se guardan las rutas relativas (VARCHAR); los bytes van a disco local.
+   * Sin JWT: reportante ciudadano. Con JWT: exige permiso fotos (w).
    */
   @Public()
   @UseGuards(OptionalJwtAuthGuard)

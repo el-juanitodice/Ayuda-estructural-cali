@@ -57,20 +57,20 @@ SELECT UUID(), 'a0000001-0000-4000-8000-000000000003', m.id,
   CASE m.code WHEN 'moderacion' THEN 1 ELSE 0 END
 FROM app_modules m;
 
--- Ingeniero A: revision r/w/u, aviso r, fotos r
+-- Ingeniero A: revision r/w/u, aviso r, fotos r/w
 INSERT INTO role_permissions (id, role_id, app_module_id, r, w, u, d)
 SELECT UUID(), 'a0000001-0000-4000-8000-000000000004', m.id,
   CASE m.code WHEN 'revision' THEN 1 WHEN 'aviso' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
-  CASE m.code WHEN 'revision' THEN 1 ELSE 0 END,
+  CASE m.code WHEN 'revision' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
   CASE m.code WHEN 'revision' THEN 1 ELSE 0 END,
   0
 FROM app_modules m;
 
--- Ingeniero B: campo r/w/u, aviso r, fotos r
+-- Ingeniero B: campo r/w/u, aviso r, fotos r/w
 INSERT INTO role_permissions (id, role_id, app_module_id, r, w, u, d)
 SELECT UUID(), 'a0000001-0000-4000-8000-000000000005', m.id,
   CASE m.code WHEN 'campo' THEN 1 WHEN 'aviso' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
-  CASE m.code WHEN 'campo' THEN 1 ELSE 0 END,
+  CASE m.code WHEN 'campo' THEN 1 WHEN 'fotos' THEN 1 ELSE 0 END,
   CASE m.code WHEN 'campo' THEN 1 ELSE 0 END,
   0
 FROM app_modules m;

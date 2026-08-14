@@ -86,7 +86,7 @@ Respuesta: `{ ok, uuid, ruta_full, ruta_thumb }` — las rutas son relativas, no
 
 `GET /api/v1/fotos/:uuid?tam=thumb|full` — devuelve el binario con `Content-Type` correcto.
 
-Bearer token opcional en subida: si el ingeniero envía JWT, `origen` queda registrado como `ingeniero_a` / `ingeniero_b`.
+Sin JWT: subida de reportante (pública), `origen = ciudadano`. Con JWT: exige `fotos` (w); `origen` = `ingeniero_a` / `ingeniero_b` si aplica, o slug del rol dinámico (ej. `ingeniero_c`, `moderador`).
 
 ## Pendiente (basado en api legacy)
 
