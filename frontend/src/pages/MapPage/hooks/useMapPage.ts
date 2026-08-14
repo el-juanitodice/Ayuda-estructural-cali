@@ -1,41 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapLegend } from '@/components/map/MapLegend';
-import { CALI_CENTER, COLORES_MAPA, ETIQUETAS_MAPA } from '@/constants/map';
 import { reportesService } from '@/api/reportes/reportes.service';
-import type { MapaPunto, MapaResponse } from '@/types/map';
+import { CALI_CENTER, COLORES_MAPA } from '@/constants/map';
+import { htmlPopupMapa } from '@/lib/map-popup';
+import type { MapaLeyenda } from '@/types/map';
 
-function popupHtml(p: MapaPunto): string {
-  const etiqueta = ETIQUETAS_MAPA[p.color] ?? p.color;
-  const ubicacion = [p.barrio, p.comuna ? `(comuna ${p.comuna})` : ''].filter(Boolean).join(' ');
-  const detalle =
-    p.con_dictamen && p.dictaminado_en
-      ? `Dictamen firmado el ${new Date(p.dictaminado_en).toLocaleDateString('es-CO')}`
-      : 'Sin inspección técnica todavía';
-
-  return (
-    `<strong>${etiqueta}</strong><br>` +
-    `${ubicacion}<br>` +
-    `${detalle}<br>` +
-    `<em>Ubicación aproximada (±100 m)</em>`
-  );
-}
-
-export function MapPage() {
-  const contenedorRef = useRef<HTMLDivElement>(null);
-  const [leyenda, setLeyenda] = useState<MapaResponse['leyenda'] | null>(null);
+export function useMapPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [leyenda, setLeyenda] = useState<MapaLeyenda | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sinPuntos, setSinPuntos] = useState(false);
 
   useEffect(() => {
-    const contenedor = contenedorRef.current;
+    const contenedor = containerRef.current;
     if (!contenedor) return;
 
     let mapa: L.Map | undefined;
     let cancelado = false;
 
-    (async () => {
+    void (async () => {
       try {
         const datos = await reportesService.obtenerMapa();
         if (cancelado) return;
@@ -65,7 +49,7 @@ export function MapPage() {
             fillOpacity: 0.85,
           })
             .addTo(capaMarcadores)
-            .bindPopup(popupHtml(p));
+            .bindPopup(htmlPopupMapa(p));
         }
 
         if (datos.puntos.length > 0) {
@@ -89,22 +73,10 @@ export function MapPage() {
     };
   }, []);
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {error && <p className="mb-2 text-sm font-medium text-destructive">{error}</p>}
-      {sinPuntos && !error && (
-        <p className="mb-2 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-          No hay puntos en el mapa todavía. Los reportes aparecen en gris cuando un moderador los
-          valida por teléfono. En desarrollo, activa <code className="text-xs">MAPA_INCLUIR_NUEVO=true</code>{' '}
-          en el backend para ver reportes recién enviados.
-        </p>
-      )}
-      <div
-        ref={contenedorRef}
-        className="relative z-0 isolate min-h-[300px] flex-1 rounded-lg border"
-        aria-label="Mapa público de inspecciones en Cali"
-      />
-      <MapLegend leyenda={leyenda} />
-    </div>
-  );
+  return {
+    containerRef,
+    leyenda,
+    error,
+    sinPuntos,
+  };
 }
