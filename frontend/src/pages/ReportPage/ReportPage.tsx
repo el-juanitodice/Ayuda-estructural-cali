@@ -4,9 +4,11 @@ import { ReportSituationPanel } from '@/components/report/ReportSituationPanel';
 import { PageHeader } from '@/components/common/PageHeader';
 import { pageHeaders } from '@/constants/page-headers';
 import { Form } from '@/components/ui/form';
+import { useAuth } from '@/hooks/useAuth';
 import { useReportPage } from '@/pages/ReportPage/hooks/useReportPage';
 
 export function ReportPage() {
+  const { usuario } = useAuth();
   const {
     form,
     ubicacion,
@@ -26,7 +28,7 @@ export function ReportPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PageHeader
-        suppressTitle
+        suppressTitle={!!usuario}
         pinned
         eyebrow={pageHeaders.reportar.eyebrow}
         title={pageHeaders.reportar.title}

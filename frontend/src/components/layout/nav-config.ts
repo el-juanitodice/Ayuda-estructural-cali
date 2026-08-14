@@ -4,12 +4,10 @@ import {
   HardHat,
   LayoutDashboard,
   Map,
-  Search,
   Settings,
   ShieldCheck,
   FilePen,
 } from 'lucide-react';
-import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { useAuth } from '@/hooks/useAuth';
 import { routes } from '@/constants/routes';
 import type { Rol } from '@/types/auth';
@@ -34,24 +32,6 @@ export interface NavItem {
   icon: LucideIcon;
   to?: string;
   onClick?: () => void;
-}
-
-export function usePublicNavItems(onAfterAction?: () => void): NavItem[] {
-  const { abrirConsulta } = useConsultReport();
-  const cerrar = () => onAfterAction?.();
-
-  return [
-    { key: 'reportar', label: 'Reportar', icon: FilePen, to: routes.reportar },
-    {
-      key: 'consultar',
-      label: 'Consultar radicado',
-      icon: Search,
-      onClick: () => {
-        abrirConsulta();
-        cerrar();
-      },
-    },
-  ];
 }
 
 export function useStaffNavItems(): NavItem[] {

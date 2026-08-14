@@ -8,39 +8,44 @@ import { pageHeaders } from '@/constants/page-headers';
 import { ui } from '@/constants/styles';
 import { routes } from '@/constants/routes';
 import { useConsultReport } from '@/contexts/ConsultReportContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useMapPage } from '@/pages/MapPage/hooks/useMapPage';
 import { cn } from '@/lib/utils';
 
 export function MapPage() {
   const { containerRef, leyenda, error, sinPuntos } = useMapPage();
   const { abrirConsulta } = useConsultReport();
+  const { usuario } = useAuth();
+  const esPublico = !usuario;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
-        suppressTitle
+        suppressTitle={!!usuario}
         eyebrow={pageHeaders.mapa.eyebrow}
         title={pageHeaders.mapa.title}
         description={pageHeaders.mapa.description}
         actions={
-          <>
-            <Button asChild size="sm" className="gap-2 shadow-sm">
-              <Link to={routes.reportar}>
-                <Megaphone className="size-4" />
-                Reportar daños
-              </Link>
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="gap-2 bg-card/80"
-              onClick={() => abrirConsulta()}
-            >
-              <Search className="size-4" />
-              Consultar radicado
-            </Button>
-          </>
+          esPublico ? (
+            <>
+              <Button asChild size="sm" className="gap-2 shadow-sm">
+                <Link to={routes.reportar}>
+                  <Megaphone className="size-4" />
+                  Reportar daños
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2 bg-card/80"
+                onClick={() => abrirConsulta()}
+              >
+                <Search className="size-4" />
+                Consultar radicado
+              </Button>
+            </>
+          ) : undefined
         }
       />
 

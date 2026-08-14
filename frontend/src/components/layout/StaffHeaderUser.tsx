@@ -4,6 +4,7 @@ import { LogOut } from 'lucide-react';
 import { ETIQUETA_ROL } from '@/components/layout/nav-config';
 import { LogoutConfirmDialog } from '@/components/layout/LogoutConfirmDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,17 +34,19 @@ export function StaffHeaderUser() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
             type="button"
-            className="rounded-full outline-none transition-opacity hover:opacity-90 focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:outline-none"
+            variant="outline"
+            size="icon"
+            className="group size-9 shrink-0 rounded-full bg-card/80 shadow-sm focus-visible:ring-0 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
             aria-label={`Cuenta de ${usuario.nombre}`}
           >
-            <Avatar className="h-9 w-9 border border-border/60 select-none">
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary select-none">
+            <Avatar className="h-8 w-8 border-0">
+              <AvatarFallback className="bg-transparent text-xs font-semibold text-primary group-hover:text-accent-foreground group-data-[state=open]:text-accent-foreground select-none">
                 {iniciales(usuario.nombre)}
               </AvatarFallback>
             </Avatar>
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuLabel className="font-normal select-none">
