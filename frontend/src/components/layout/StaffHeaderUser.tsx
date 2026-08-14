@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 
-import { ETIQUETA_ROL } from '@/components/layout/nav-config';
 import { LogoutConfirmDialog } from '@/components/layout/LogoutConfirmDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -51,7 +50,9 @@ export function StaffHeaderUser() {
         <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuLabel className="font-normal select-none">
             <p className="truncate text-sm font-semibold leading-tight">{usuario.nombre}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{ETIQUETA_ROL[usuario.rol]}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {usuario.role_name ?? 'Sin rol'}
+            </p>
             <p className="mt-1 truncate text-xs text-muted-foreground">{usuario.email}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

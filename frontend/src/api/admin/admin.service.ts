@@ -4,22 +4,28 @@ import type {
   ActualizarUsuarioResponse,
   CrearUsuarioResponse,
   DesactivarUsuarioResponse,
+  ListarRolesResponse,
   ListarUsuariosResponse,
   ReenviarEnlaceResponse,
   UsuarioAdmin,
 } from '@/types/admin';
-import type { Rol } from '@/types/auth';
+import type { RolOption } from '@/types/auth';
 
 interface CrearUsuarioInput {
   email: string;
   nombre: string;
-  rol: Rol;
+  role_id: string;
   telefono: string | null;
   matricula: string | null;
   profesion: string | null;
 }
 
 export const adminService = {
+  listarRoles: async (): Promise<RolOption[]> => {
+    const r = await httpClient.get<ListarRolesResponse>('/admin/roles');
+    return r.roles;
+  },
+
   listarUsuarios: async (): Promise<UsuarioAdmin[]> => {
     const r = await httpClient.get<ListarUsuariosResponse>('/admin/usuarios');
     return r.usuarios;

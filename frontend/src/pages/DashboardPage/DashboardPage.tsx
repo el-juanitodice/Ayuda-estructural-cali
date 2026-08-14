@@ -26,7 +26,7 @@ function formatearFecha(iso: string) {
 }
 
 function etiquetaNivel(nivel: string) {
-  return nivel === 'ingeniero_a' ? 'A' : nivel === 'ingeniero_b' ? 'B' : nivel;
+  return nivel === 'A' ? 'A' : nivel === 'B' ? 'B' : String(nivel);
 }
 
 function TarjetaCoberturaComuna({

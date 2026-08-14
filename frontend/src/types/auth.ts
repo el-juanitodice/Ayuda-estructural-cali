@@ -1,19 +1,19 @@
-export type Rol =
-  | 'admin'
-  | 'coordinador'
-  | 'moderador'
-  | 'ingeniero_a'
-  | 'ingeniero_b';
+import type { NavModule, PermissionFlags } from '@/types/permissions';
 
 export interface Usuario {
   id: string;
   email: string;
   nombre: string;
-  rol: Rol;
   matricula?: string | null;
+  role_id?: string | null;
+  role_name?: string | null;
+  permissions?: Record<string, PermissionFlags>;
+  nav_modules?: NavModule[];
 }
 
-export interface LoginResponse {
-  accessToken: string;
-  usuario: Usuario;
+export interface RolOption {
+  id: string;
+  name: string;
+  description: string;
+  requires_engineering_credentials: boolean;
 }

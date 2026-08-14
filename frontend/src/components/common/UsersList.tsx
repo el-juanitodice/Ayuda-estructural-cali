@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ETIQUETAS_ROL } from '@/components/common/RolSelect';
 import type { UsuarioAdmin } from '@/types/admin';
 
 function formatearFecha(iso: string | null) {
@@ -118,7 +117,7 @@ export function UsersList({
                 />
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>{ETIQUETAS_ROL[u.rol]}</span>
+                <span>{u.role_name ?? 'Sin rol'}</span>
                 <span aria-hidden>·</span>
                 <span>Último acceso: {formatearFecha(u.ultimo_acceso)}</span>
               </div>
@@ -159,7 +158,7 @@ export function UsersList({
                       {u.email}
                     </span>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{ETIQUETAS_ROL[u.rol]}</TableCell>
+                  <TableCell className="whitespace-nowrap">{u.role_name ?? 'Sin rol'}</TableCell>
                   <TableCell>
                     <EstadoUsuario usuario={u} />
                   </TableCell>

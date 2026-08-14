@@ -3,7 +3,7 @@ import type { DanoAis } from '@/types/revision';
 export interface AsignacionCampo {
   asignacion_id: number | null;
   vence_en: string | null;
-  rol_asignado: string | null;
+  nivel_ingenieria: 'A' | 'B' | null;
   reporte_uuid: string;
   consecutivo: string;
   direccion: string;

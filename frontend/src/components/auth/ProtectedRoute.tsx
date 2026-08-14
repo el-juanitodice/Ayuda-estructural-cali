@@ -2,9 +2,14 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AppFade } from '@/components/common/AppFade';
 import { useAuth } from '@/hooks/useAuth';
 import { routes } from '@/constants/routes';
-import type { Rol } from '@/types/auth';
+import type { PermissionFlag } from '@/types/permissions';
 
-export function ProtectedRoute({ roles }: { roles?: Rol[] }) {
+type ProtectedRouteProps = {
+  module?: string;
+  flag?: PermissionFlag;
+};
+
+export function ProtectedRoute({ module, flag = 'r' }: ProtectedRouteProps) {
   const { usuario, cargando } = useAuth();
   const location = useLocation();
 
@@ -20,8 +25,11 @@ export function ProtectedRoute({ roles }: { roles?: Rol[] }) {
     return <Navigate to={routes.ingreso} state={{ from: location.pathname }} replace />;
   }
 
-  if (roles && !roles.includes(usuario.rol)) {
-    return <Navigate to={routes.home} replace />;
+  if (module) {
+    const permitido = Boolean(usuario.permissions?.[module]?.[flag]);
+    if (!permitido) {
+      return <Navigate to={routes.home} replace />;
+    }
   }
 
   return <Outlet />;

@@ -34,7 +34,7 @@ export interface ColaModeracionResponse {
 export interface IngenieroDisponible {
   id: number;
   nombre: string;
-  rol: 'ingeniero_a' | 'ingeniero_b';
+  nivel: 'A' | 'B';
   profesion: string | null;
   matricula: string | null;
   carga_actual: number;

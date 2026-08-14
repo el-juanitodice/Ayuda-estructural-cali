@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { iniciarSyncCampo, suscribirPendientesCampo } from '@/lib/campo/sync';
 
 interface CampoSyncContextValue {
@@ -16,10 +16,10 @@ interface CampoSyncContextValue {
 const CampoSyncContext = createContext<CampoSyncContextValue | null>(null);
 
 export function CampoSyncProvider({ children }: { children: ReactNode }) {
-  const { usuario } = useAuth();
+  const { puede } = usePermissions();
   const [formulariosPendientes, setFormulariosPendientes] = useState(0);
 
-  const esIngeniero = usuario?.rol === 'ingeniero_a' || usuario?.rol === 'ingeniero_b';
+  const esIngeniero = puede('campo', 'r') || puede('revision', 'r');
 
   useEffect(() => {
     if (!esIngeniero) {

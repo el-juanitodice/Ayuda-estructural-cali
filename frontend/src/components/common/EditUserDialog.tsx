@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Mail, Pencil } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { esRolIngeniero, RolSelect } from '@/components/common/RolSelect';
+import { RoleSelect } from '@/components/common/RoleSelect';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -16,13 +16,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { adminService } from '@/api/admin/admin.service';
 import { useAuth } from '@/hooks/useAuth';
-import type { Rol } from '@/types/auth';
+import type { RolOption } from '@/types/auth';
 import type { ActualizarUsuarioResponse, UsuarioAdmin } from '@/types/admin';
 
 interface FormularioUsuario {
   email: string;
   nombre: string;
-  rol: Rol;
+  role_id: string;
   telefono: string;
   matricula: string;
   profesion: string;
@@ -33,7 +33,7 @@ function formularioDesdeUsuario(u: UsuarioAdmin): FormularioUsuario {
   return {
     email: u.email,
     nombre: u.nombre,
-    rol: u.rol,
+    role_id: u.role_id ?? '',
     telefono: u.telefono ?? '',
     matricula: u.matricula ?? '',
     profesion: u.profesion ?? '',
@@ -51,12 +51,13 @@ interface EditUserDialogProps {
 export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: EditUserDialogProps) {
   const { usuario: sesion } = useAuth();
   const [form, setForm] = useState<FormularioUsuario | null>(null);
+  const [rolMeta, setRolMeta] = useState<RolOption | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [reenviando, setReenviando] = useState(false);
 
   const esYo = usuario?.uuid === sesion?.id;
-  const esIngeniero = form ? esRolIngeniero(form.rol) : false;
+  const requiereIngenieria = Boolean(rolMeta?.requires_engineering_credentials);
 
   useEffect(() => {
     if (usuario && open) {
@@ -68,22 +69,23 @@ export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: E
   const cerrar = () => {
     onOpenChange(false);
     setForm(null);
+    setRolMeta(null);
     setError(null);
   };
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!usuario || !form) return;
+    if (!usuario || !form || !form.role_id) return;
     setError(null);
     setGuardando(true);
     try {
       const r = await adminService.actualizarUsuario(usuario.id, {
         email: form.email,
         nombre: form.nombre,
-        rol: form.rol,
+        role_id: form.role_id,
         telefono: form.telefono || null,
-        matricula: esIngeniero ? form.matricula : null,
-        profesion: esIngeniero ? form.profesion : null,
+        matricula: requiereIngenieria ? form.matricula : null,
+        profesion: requiereIngenieria ? form.profesion : null,
         activo: form.activo,
       });
       onActualizado(r);
@@ -152,10 +154,11 @@ export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: E
             />
           </div>
 
-          <RolSelect
-            id="edit-rol"
-            value={form.rol}
-            onChange={(rol) => setForm({ ...form, rol })}
+          <RoleSelect
+            id="edit-role_id"
+            value={form.role_id}
+            onChange={(role_id) => setForm({ ...form, role_id })}
+            onRoleMeta={setRolMeta}
             disabled={guardando || esYo}
           />
 
@@ -168,7 +171,7 @@ export function EditUserDialog({ usuario, open, onOpenChange, onActualizado }: E
             />
           </div>
 
-          {esIngeniero && (
+          {requiereIngenieria && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="edit-matricula">Matrícula COPNIA</Label>

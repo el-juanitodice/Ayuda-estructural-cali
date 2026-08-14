@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { HardHat, LogIn, LogOut } from 'lucide-react';
 
-import { ETIQUETA_ROL, useStaffNavItems, type NavItem } from '@/components/layout/nav-config';
+import { useStaffNavItems, type NavItem } from '@/components/layout/nav-config';
 import { LogoutConfirmDialog } from '@/components/layout/LogoutConfirmDialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -109,7 +109,7 @@ function SidebarUsuario() {
         <div className="mb-2 min-w-0 rounded-md px-2 py-1.5 group-data-[collapsible=icon]:hidden">
           <p className="truncate text-sm font-semibold leading-tight">{usuario.nombre}</p>
           <p className="mt-0.5 text-xs font-medium text-primary-foreground/80">
-            {ETIQUETA_ROL[usuario.rol]}
+            {usuario.role_name ?? 'Sin rol'}
           </p>
           <p className="mt-1 truncate text-xs text-primary-foreground/55">{usuario.email}</p>
         </div>

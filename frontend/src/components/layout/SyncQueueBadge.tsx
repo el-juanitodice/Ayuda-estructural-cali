@@ -1,15 +1,15 @@
 import { Camera, ClipboardList } from 'lucide-react';
 import { useCampoSync } from '@/contexts/CampoSyncContext';
 import { useUploadQueue } from '@/contexts/UploadQueueContext';
-import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 
 export function SyncQueueBadge({ className }: { className?: string }) {
-  const { usuario } = useAuth();
+  const { puede } = usePermissions();
   const { pendientes: fotosPendientes } = useUploadQueue();
   const { formulariosPendientes } = useCampoSync();
 
-  const esIngeniero = usuario?.rol === 'ingeniero_a' || usuario?.rol === 'ingeniero_b';
+  const esIngeniero = puede('campo', 'r') || puede('revision', 'r');
   const total = fotosPendientes + (esIngeniero ? formulariosPendientes : 0);
 
   if (total <= 0) return null;

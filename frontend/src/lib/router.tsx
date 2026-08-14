@@ -42,27 +42,27 @@ export const appRouter = createBrowserRouter([
     element: <AppShellLayout />,
     children: [
       {
-        element: <ProtectedRoute roles={['ingeniero_a', 'ingeniero_b']} />,
+        element: <ProtectedRoute module="campo" />,
         children: [{ path: 'campo', element: <FieldPage /> }],
       },
       {
-        element: <ProtectedRoute roles={['ingeniero_a']} />,
+        element: <ProtectedRoute module="revision" />,
         children: [{ path: 'revision', element: <ReviewPage /> }],
       },
       {
-        element: <ProtectedRoute />,
+        element: <ProtectedRoute module="aviso" />,
         children: [{ path: 'aviso', element: <NoticePage /> }],
       },
       {
-        element: <ProtectedRoute roles={['moderador', 'admin']} />,
+        element: <ProtectedRoute module="moderacion" />,
         children: [{ path: 'moderacion', element: <ModerationPage /> }],
       },
       {
-        element: <ProtectedRoute roles={['coordinador', 'admin']} />,
+        element: <ProtectedRoute module="tablero" />,
         children: [{ path: 'tablero', element: <DashboardPage /> }],
       },
       {
-        element: <ProtectedRoute roles={['admin']} />,
+        element: <ProtectedRoute module="admin_usuarios" />,
         children: [{ path: 'admin', element: <AdminPage /> }],
       },
     ],

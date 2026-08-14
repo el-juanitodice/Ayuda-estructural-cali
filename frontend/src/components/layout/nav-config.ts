@@ -10,21 +10,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { routes } from '@/constants/routes';
-import type { Rol } from '@/types/auth';
+import { MODULE_CODES } from '@/types/permissions';
 
-const ETIQUETA_ROL: Record<Rol, string> = {
-  admin: 'Administrador',
-  coordinador: 'Coordinador',
-  moderador: 'Moderador',
-  ingeniero_a: 'Ingeniero nivel A',
-  ingeniero_b: 'Ingeniero nivel B',
+const ICONO_MODULO: Record<string, LucideIcon> = {
+  [MODULE_CODES.campo]: HardHat,
+  [MODULE_CODES.revision]: ClipboardCheck,
+  [MODULE_CODES.moderacion]: ShieldCheck,
+  [MODULE_CODES.tablero]: LayoutDashboard,
+  [MODULE_CODES.adminUsuarios]: Settings,
 };
-
-export { ETIQUETA_ROL };
-
-function tieneRol(rol: Rol, permitidos: Rol[]) {
-  return permitidos.includes(rol);
-}
 
 export interface NavItem {
   key: string;
@@ -42,21 +36,14 @@ export function useStaffNavItems(): NavItem[] {
     { key: 'reportar', label: 'Reportar', icon: FilePen, to: routes.reportar },
   ];
 
-  if (usuario) {
-    if (tieneRol(usuario.rol, ['ingeniero_a', 'ingeniero_b'])) {
-      items.push({ key: 'campo', label: 'Campo', icon: HardHat, to: routes.campo });
-    }
-    if (usuario.rol === 'ingeniero_a') {
-      items.push({ key: 'revision', label: 'Revisión', icon: ClipboardCheck, to: routes.revision });
-    }
-    if (tieneRol(usuario.rol, ['moderador', 'admin'])) {
-      items.push({ key: 'moderacion', label: 'Moderación', icon: ShieldCheck, to: routes.moderacion });
-    }
-    if (tieneRol(usuario.rol, ['coordinador', 'admin'])) {
-      items.push({ key: 'tablero', label: 'Tablero', icon: LayoutDashboard, to: routes.tablero });
-    }
-    if (usuario.rol === 'admin') {
-      items.push({ key: 'admin', label: 'Administración', icon: Settings, to: routes.admin });
+  if (usuario?.nav_modules?.length) {
+    for (const mod of usuario.nav_modules) {
+      items.push({
+        key: mod.code,
+        label: mod.name,
+        icon: ICONO_MODULO[mod.code] ?? LayoutDashboard,
+        to: mod.route_path,
+      });
     }
   }
 

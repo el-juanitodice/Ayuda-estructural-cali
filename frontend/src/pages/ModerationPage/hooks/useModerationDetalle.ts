@@ -120,7 +120,7 @@ export function useModerationDetalle(reporte: ReporteCola, onActualizado: () => 
   };
 
   const requiereA = resultado?.requiere_nivel_a;
-  const elegibles = requiereA ? ingenieros.filter((i) => i.rol === 'ingeniero_a') : ingenieros;
+  const elegibles = requiereA ? ingenieros.filter((i) => i.nivel === 'A') : ingenieros;
   const soloLectura = !reporte.en_cola && !asignacionDirecta;
 
   return {

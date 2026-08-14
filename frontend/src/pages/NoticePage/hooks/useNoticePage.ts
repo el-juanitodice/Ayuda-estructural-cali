@@ -11,13 +11,17 @@ export function useNoticePage() {
 
   const [datos, setDatos] = useState<FormularioResponse | null>(null);
   const [qr, setQr] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(() =>
-    uuid ? null : 'Falta el identificador del formulario (?uuid=…).',
-  );
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(Boolean(uuid));
 
   const load = useCallback(async () => {
-    if (!uuid) return;
+    if (!uuid) {
+      setDatos(null);
+      setQr(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     setError(null);

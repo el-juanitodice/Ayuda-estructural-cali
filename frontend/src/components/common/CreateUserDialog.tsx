@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { esRolIngeniero, RolSelect } from '@/components/common/RolSelect';
+import { RoleSelect } from '@/components/common/RoleSelect';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,13 +14,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { adminService } from '@/api/admin/admin.service';
-import type { Rol } from '@/types/auth';
+import type { RolOption } from '@/types/auth';
 import type { CrearUsuarioResponse } from '@/types/admin';
 
 interface FormularioUsuario {
   email: string;
   nombre: string;
-  rol: Rol;
+  role_id: string;
   telefono: string;
   matricula: string;
   profesion: string;
@@ -29,7 +29,7 @@ interface FormularioUsuario {
 const valoresIniciales: FormularioUsuario = {
   email: '',
   nombre: '',
-  rol: 'moderador',
+  role_id: '',
   telefono: '',
   matricula: '',
   profesion: '',
@@ -43,29 +43,35 @@ interface CreateUserDialogProps {
 
 export function CreateUserDialog({ open, onOpenChange, onCreado }: CreateUserDialogProps) {
   const [form, setForm] = useState<FormularioUsuario>(valoresIniciales);
+  const [rolMeta, setRolMeta] = useState<RolOption | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const esIngeniero = esRolIngeniero(form.rol);
+  const requiereIngenieria = Boolean(rolMeta?.requires_engineering_credentials);
 
   const cerrar = () => {
     onOpenChange(false);
     setForm(valoresIniciales);
+    setRolMeta(null);
     setError(null);
   };
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.role_id) {
+      setError('Selecciona un rol.');
+      return;
+    }
     setError(null);
     setEnviando(true);
     try {
       const r = await adminService.crearUsuario({
         email: form.email,
         nombre: form.nombre,
-        rol: form.rol,
+        role_id: form.role_id,
         telefono: form.telefono || null,
-        matricula: esIngeniero ? form.matricula : null,
-        profesion: esIngeniero ? form.profesion : null,
+        matricula: requiereIngenieria ? form.matricula : null,
+        profesion: requiereIngenieria ? form.profesion : null,
       });
       onCreado(r);
       cerrar();
@@ -115,10 +121,11 @@ export function CreateUserDialog({ open, onOpenChange, onCreado }: CreateUserDia
             />
           </div>
 
-          <RolSelect
-            id="rol"
-            value={form.rol}
-            onChange={(rol) => setForm({ ...form, rol })}
+          <RoleSelect
+            id="role_id"
+            value={form.role_id}
+            onChange={(role_id) => setForm({ ...form, role_id })}
+            onRoleMeta={setRolMeta}
             disabled={enviando}
           />
 
@@ -131,7 +138,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreado }: CreateUserDia
             />
           </div>
 
-          {esIngeniero && (
+          {requiereIngenieria && (
             <>
               <p className="text-sm text-muted-foreground">
                 <strong>Verifica la matrícula en copnia.gov.co</strong> antes de crear. Un ingeniero sin

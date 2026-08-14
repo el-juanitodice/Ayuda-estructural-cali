@@ -241,7 +241,7 @@ function DetalleReporte({
                 <option value="">— elegir —</option>
                 {elegibles.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.nombre} ({i.rol === 'ingeniero_a' ? 'A' : 'B'}) — {i.carga_actual} activas
+                    {i.nombre} (nivel {i.nivel}) — {i.carga_actual} activas
                   </option>
                 ))}
               </select>
