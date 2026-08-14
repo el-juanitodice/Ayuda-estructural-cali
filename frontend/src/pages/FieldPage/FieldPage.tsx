@@ -182,6 +182,7 @@ export function FieldPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.campo.eyebrow}
         title={pageHeaders.campo.title}
         description={pageHeaders.campo.description}

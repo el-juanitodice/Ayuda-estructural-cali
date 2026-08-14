@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HardHat, LogIn, LogOut } from 'lucide-react';
 
-import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { ETIQUETA_ROL, useStaffNavItems, type NavItem } from '@/components/layout/nav-config';
 import { Button } from '@/components/ui/button';
 import {
@@ -145,7 +144,7 @@ export function AppSidebar() {
         '[&_[data-sidebar=sidebar]]:shadow-xl',
       )}
     >
-      <SidebarHeader className="border-b border-white/10 p-2">
+      <SidebarHeader className="flex h-16 shrink-0 items-center border-b border-white/10 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -166,7 +165,6 @@ export function AppSidebar() {
                   Inspección
                   <span className="block text-xs font-medium text-primary-foreground/70">Cali</span>
                 </span>
-                <SyncQueueBadge className="ml-auto group-data-[collapsible=icon]:hidden" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

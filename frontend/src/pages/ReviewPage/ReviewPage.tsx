@@ -501,6 +501,7 @@ export function ReviewPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.revision.eyebrow}
         title={pageHeaders.revision.title}
         description={pageHeaders.revision.description}

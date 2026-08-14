@@ -3,11 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { HardHat, LogIn, Menu } from 'lucide-react';
 
 import { usePublicNavItems, type NavItem } from '@/components/layout/nav-config';
+import { SidebarMobileTrigger } from '@/components/layout/SidebarMobileTrigger';
 import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { SidebarMobileTrigger } from '@/components/layout/SidebarMobileTrigger';
+import { getPageHeaderForPath } from '@/constants/page-headers';
 import { routes } from '@/constants/routes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -164,16 +165,32 @@ export function SitePublicHeader() {
 
 export function SiteStaffHeader() {
   const isMobile = useIsMobile();
-
-  if (!isMobile) {
-    return null;
-  }
+  const { pathname } = useLocation();
+  const meta = getPageHeaderForPath(pathname);
 
   return (
-    <header className="site-staff-header sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden">
-      <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />
-      <Separator orientation="vertical" className="mr-1 h-4" />
-      <div className="ml-auto">
+    <header className="site-staff-header sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-md print:hidden sm:px-6">
+      {isMobile && (
+        <>
+          <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />
+          <Separator orientation="vertical" className="h-4" />
+        </>
+      )}
+
+      {meta ? (
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {meta.eyebrow}
+          </p>
+          <p className="truncate font-serif text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            {meta.title}
+          </p>
+        </div>
+      ) : (
+        <div className="min-w-0 flex-1" />
+      )}
+
+      <div className="ml-auto shrink-0">
         <SyncQueueBadge />
       </div>
     </header>

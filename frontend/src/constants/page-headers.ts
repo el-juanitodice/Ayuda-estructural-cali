@@ -54,3 +54,22 @@ export const pageHeaders = {
     description: 'Documento para el predio inspeccionado. Imprime o guarda como PDF.',
   },
 } as const;
+
+export type PageHeaderKey = keyof typeof pageHeaders;
+
+const PATH_TO_HEADER: Record<string, PageHeaderKey> = {
+  '/': 'mapa',
+  '/reportar': 'reportar',
+  '/campo': 'campo',
+  '/revision': 'revision',
+  '/aviso': 'aviso',
+  '/moderacion': 'moderacion',
+  '/tablero': 'tablero',
+  '/admin': 'admin',
+};
+
+/** Metadatos de cabecera según la ruta activa (shell con sidebar). */
+export function getPageHeaderForPath(pathname: string) {
+  const key = PATH_TO_HEADER[pathname];
+  return key ? pageHeaders[key] : null;
+}

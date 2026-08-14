@@ -30,6 +30,7 @@ export function NoticePage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.aviso.eyebrow}
         title={pageHeaders.aviso.title}
         description={pageHeaders.aviso.description}

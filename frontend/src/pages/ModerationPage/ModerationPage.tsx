@@ -427,6 +427,7 @@ export function ModerationPage() {
   return (
     <div className="space-y-6">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.moderacion.eyebrow}
         title={pageHeaders.moderacion.title}
         description={pageHeaders.moderacion.description}

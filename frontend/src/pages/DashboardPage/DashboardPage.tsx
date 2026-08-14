@@ -85,6 +85,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-4">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.tablero.eyebrow}
         title={pageHeaders.tablero.title}
         description={pageHeaders.tablero.description}

@@ -29,6 +29,7 @@ export function AdminPage() {
   return (
     <div className="w-full space-y-6">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.admin.eyebrow}
         title={pageHeaders.admin.title}
         description={pageHeaders.admin.description}

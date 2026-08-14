@@ -18,6 +18,7 @@ export function MapPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
+        suppressTitle
         eyebrow={pageHeaders.mapa.eyebrow}
         title={pageHeaders.mapa.title}
         description={pageHeaders.mapa.description}
