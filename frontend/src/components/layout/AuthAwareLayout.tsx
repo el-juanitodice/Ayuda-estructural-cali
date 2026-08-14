@@ -1,10 +1,17 @@
+import { useLocation } from 'react-router-dom';
+
 import { useAuth } from '@/hooks/useAuth';
 import { AppFade } from '@/components/common/AppFade';
+import { AppShellLayout } from '@/components/layout/AppShellLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { routes } from '@/constants/routes';
 
-/** Rutas públicas: navbar arriba (sin sidebar). */
+const RUTAS_SIDEBAR_CON_SESION = [routes.home, routes.reportar] as const;
+
+/** Rutas públicas: navbar sin sesión; sidebar en mapa/reportar si hay sesión. */
 export function AuthAwareLayout() {
-  const { cargando } = useAuth();
+  const { usuario, cargando } = useAuth();
+  const { pathname } = useLocation();
 
   if (cargando) {
     return (
@@ -14,5 +21,8 @@ export function AuthAwareLayout() {
     );
   }
 
-  return <PublicLayout />;
+  const sidebarConSesion =
+    usuario != null && RUTAS_SIDEBAR_CON_SESION.includes(pathname as (typeof RUTAS_SIDEBAR_CON_SESION)[number]);
+
+  return sidebarConSesion ? <AppShellLayout /> : <PublicLayout />;
 }

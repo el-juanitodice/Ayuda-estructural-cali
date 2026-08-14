@@ -15,7 +15,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { routes } from '@/constants/routes';
@@ -138,7 +137,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible="offcanvas"
       className={cn(
         'site-app-sidebar border-r-0 print:hidden',
         '[&_[data-sidebar=sidebar]]:site-sidebar-panel [&_[data-sidebar=sidebar]]:text-primary-foreground',
@@ -184,7 +183,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarUsuario />
-      <SidebarRail className="after:bg-white/20 hover:after:bg-white/30" />
     </Sidebar>
   );
 }

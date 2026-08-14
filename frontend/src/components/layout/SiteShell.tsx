@@ -7,8 +7,9 @@ import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarMobileTrigger } from '@/components/layout/SidebarMobileTrigger';
 import { routes } from '@/constants/routes';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 function PublicNavLinks({
@@ -121,7 +122,12 @@ export function SitePublicHeader() {
         <div className="ml-auto md:hidden">
           <Sheet open={abierto} onOpenChange={setAbierto}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Abrir menú">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 border-0 shadow-none ring-0 focus-visible:ring-0"
+                aria-label="Abrir menú"
+              >
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -157,10 +163,12 @@ export function SitePublicHeader() {
 }
 
 export function SiteStaffHeader() {
+  const isMobile = useIsMobile();
+
   return (
     <header className="site-staff-header flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden sm:px-6">
-      <SidebarTrigger className="-ml-1 text-foreground" />
-      <Separator orientation="vertical" className="mr-1 hidden h-4 sm:block" />
+      {isMobile && <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />}
+      {isMobile && <Separator orientation="vertical" className="mr-1 h-4" />}
       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
         <p className="truncate text-sm font-semibold tracking-tight text-foreground sm:text-base">
           Inspección estructural — Cali
