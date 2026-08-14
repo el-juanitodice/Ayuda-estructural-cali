@@ -15,6 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -232,19 +239,26 @@ function DetalleReporte({
             )}
             <div className="space-y-2">
               <Label htmlFor="ingeniero">Asignar ingeniero</Label>
-              <select
-                id="ingeniero"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={ingenieroId}
-                onChange={(e) => setIngenieroId(e.target.value)}
+              <Select
+                value={ingenieroId || undefined}
+                onValueChange={setIngenieroId}
+                disabled={!elegibles.length}
               >
-                <option value="">— elegir —</option>
-                {elegibles.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.nombre} (nivel {i.nivel}) — {i.carga_actual} activas
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="ingeniero">
+                  <SelectValue
+                    placeholder={
+                      elegibles.length ? 'Selecciona un ingeniero' : 'No hay ingenieros disponibles'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {elegibles.map((i) => (
+                    <SelectItem key={i.id} value={String(i.id)}>
+                      {i.nombre} (nivel {i.nivel}) — {i.carga_actual} activas
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button onClick={asignar} disabled={cargando || !ingenieroId}>
