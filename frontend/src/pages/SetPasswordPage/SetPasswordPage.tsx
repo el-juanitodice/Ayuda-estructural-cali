@@ -1,50 +1,18 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { routes } from '@/constants/routes';
-import { authService } from '@/api/auth/auth.service';
-
-interface SetPasswordForm {
-  clave: string;
-  confirmar: string;
-}
+import { useSetPasswordPage } from '@/pages/SetPasswordPage/hooks/useSetPasswordPage';
 
 interface SetPasswordPageProps {
   token: string;
 }
 
 export function SetPasswordPage({ token }: SetPasswordPageProps) {
-  const [error, setError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
-  } = useForm<SetPasswordForm>({
-    defaultValues: { clave: '', confirmar: '' },
-  });
-
-  const clave = watch('clave');
-
-  const onSubmit = async (datos: SetPasswordForm) => {
-    setError(null);
-    try {
-      await authService.definirClave(token, datos.clave);
-      toast.success('Contraseña establecida', {
-        description: 'Ya puedes ingresar con tu correo y la nueva contraseña.',
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo guardar la contraseña';
-      setError(msg);
-      toast.error('No se pudo guardar la contraseña', { description: msg });
-      throw e;
-    }
-  };
+  const { form, clave, error, isSubmitting, isSubmitSuccessful, onSubmit } = useSetPasswordPage(token);
+  const { register, handleSubmit, formState: { errors } } = form;
 
   if (isSubmitSuccessful) {
     return (

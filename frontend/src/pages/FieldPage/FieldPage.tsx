@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, WifiOff } from 'lucide-react';
 import { FieldCaptureForm } from '@/components/campo/FieldCaptureForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,8 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { refrescarAsignacionesCampo } from '@/lib/campo/sync';
-import type { AsignacionCampo, MisAsignacionesResponse } from '@/types/campo';
+import { useFieldPage } from '@/pages/FieldPage/hooks/useFieldPage';
+import type { AsignacionCampo } from '@/types/campo';
 
 function formatearFecha(iso: string | null | undefined) {
   if (!iso) return '—';
@@ -153,33 +152,17 @@ function TablaAsignaciones({
 }
 
 export function FieldPage() {
-  const [activas, setActivas] = useState<AsignacionCampo[]>([]);
-  const [historial, setHistorial] = useState<AsignacionCampo[]>([]);
-  const [fotosPorReporte, setFotosPorReporte] = useState<MisAsignacionesResponse['fotos']>({});
-  const [abierta, setAbierta] = useState<AsignacionCampo | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [desdeCache, setDesdeCache] = useState(false);
-
-  const cargar = useCallback(() => {
-    setCargando(true);
-    setError(null);
-    const enLinea = navigator.onLine;
-    refrescarAsignacionesCampo()
-      .then((r) => {
-        setActivas(r.activas);
-        setHistorial(r.historial);
-        setFotosPorReporte(r.fotos);
-        setDesdeCache(!enLinea);
-        setAbierta(null);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'No se pudo cargar'))
-      .finally(() => setCargando(false));
-  }, []);
-
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
+  const {
+    activas,
+    historial,
+    fotosPorReporte,
+    abierta,
+    setAbierta,
+    error,
+    cargando,
+    desdeCache,
+    cargar,
+  } = useFieldPage();
 
   if (abierta) {
     return (

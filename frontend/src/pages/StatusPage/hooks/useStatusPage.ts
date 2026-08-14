@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { routes } from '@/constants/routes';
 
-/** Deep link /estado?radicado=… — abre el modal y redirige al inicio. */
-export function StatusPage() {
+export function useStatusPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { abrirConsulta } = useConsultReport();
@@ -14,6 +13,4 @@ export function StatusPage() {
     abrirConsulta(radicado ?? undefined);
     navigate(routes.home, { replace: true });
   }, [abrirConsulta, navigate, radicado]);
-
-  return null;
 }

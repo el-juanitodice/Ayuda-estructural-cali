@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Download, LayoutDashboard, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +12,9 @@ import {
 } from '@/components/ui/table';
 import { CLASE_COLOR, ETIQUETA_COLOR } from '@/constants/reportStatus';
 import { COLORES_MAPA } from '@/constants/map';
-import { tableroService } from '@/api/tablero/tablero.service';
 import { cn } from '@/lib/utils';
+import { useDashboardPage } from '@/pages/DashboardPage/hooks/useDashboardPage';
 import type { ColorHabitabilidad } from '@/types/report';
-import type {
-  CoberturaTableroResponse,
-  DiscrepanciasTableroResponse,
-  VencimientosTableroResponse,
-} from '@/types/tablero';
 
 const COLORES_DICTAMEN: ColorHabitabilidad[] = ['verde', 'amarillo', 'naranja', 'rojo'];
 
@@ -72,53 +65,16 @@ function TarjetaCoberturaComuna({
 }
 
 export function DashboardPage() {
-  const [cobertura, setCobertura] = useState<CoberturaTableroResponse | null>(null);
-  const [vencimientos, setVencimientos] = useState<VencimientosTableroResponse['asignaciones']>([]);
-  const [discrepancias, setDiscrepancias] = useState<DiscrepanciasTableroResponse['discrepancias']>(
-    [],
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [exportando, setExportando] = useState(false);
-
-  const cargar = useCallback(async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const [c, v, d] = await Promise.all([
-        tableroService.cobertura(),
-        tableroService.vencimientos(),
-        tableroService.discrepancias(),
-      ]);
-      setCobertura(c);
-      setVencimientos(v.asignaciones);
-      setDiscrepancias(d.discrepancias);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo cargar el tablero');
-    } finally {
-      setCargando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
-
-  const exportarCsv = async () => {
-    setExportando(true);
-    setError(null);
-    try {
-      const hoy = new Date().toISOString().slice(0, 10);
-      await tableroService.exportarCsv(`inspecciones_${hoy}.csv`);
-      toast.success('CSV exportado', { description: `inspecciones_${hoy}.csv` });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo exportar';
-      setError(msg);
-      toast.error('No se pudo exportar', { description: msg });
-    } finally {
-      setExportando(false);
-    }
-  };
+  const {
+    cobertura,
+    vencimientos,
+    discrepancias,
+    error,
+    cargando,
+    exportando,
+    cargar,
+    exportarCsv,
+  } = useDashboardPage();
 
   if (cargando && !cobertura) {
     return <p className="text-sm text-muted-foreground">Cargando tablero…</p>;

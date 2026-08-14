@@ -1,0 +1,1 @@
+export { SetPasswordPage } from './SetPasswordPage';

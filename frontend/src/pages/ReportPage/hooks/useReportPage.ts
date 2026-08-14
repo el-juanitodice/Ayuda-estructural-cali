@@ -1,21 +1,16 @@
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { requiereLlamar123 } from '@shared/ais.js';
-import { Emergency123Dialog } from '@/components/report/Emergency123Dialog';
-import { ReportDetailsPanel } from '@/components/report/ReportDetailsPanel';
-import { ReportSituationPanel } from '@/components/report/ReportSituationPanel';
 import { valoresInicialesReporte, type ReporteForm } from '@/components/report/report-form.types';
 import { useConsultReport } from '@/contexts/ConsultReportContext';
-import { Form } from '@/components/ui/form';
 import { encolarFotosReporte } from '@/lib/fotos/cola-subida';
 import { construirPayloadReporte, gpsEnAreaCali, type UbicacionReporte } from '@/lib/reporte';
 import { ErrorApi } from '@/api/http.client';
 import { reportesService } from '@/api/reportes/reportes.service';
 import type { CrearReporteResponse } from '@/types/report';
 
-export function ReportPage() {
+export function useReportPage() {
   const { abrirConsulta } = useConsultReport();
   const [ubicacion, setUbicacion] = useState<UbicacionReporte | null>(null);
   const [fotos, setFotos] = useState<File[]>([]);
@@ -131,41 +126,19 @@ export function ReportPage() {
     void form.handleSubmit((datos) => enviarReporte(datos, true))();
   };
 
-  return (
-    <>
-      <div className="mb-3 flex items-center gap-2">
-        <Megaphone className="size-5 text-primary" aria-hidden />
-        <h1 className="text-lg font-semibold">Reportar daños</h1>
-      </div>
-
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((datos) => enviarReporte(datos))}
-          noValidate
-          className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6"
-        >
-          <ReportSituationPanel
-            form={form}
-            fotos={fotos}
-            onFotosChange={setFotos}
-            enviando={enviando}
-          />
-          <ReportDetailsPanel
-            form={form}
-            ubicacion={ubicacion}
-            onUbicacionChange={setUbicacion}
-            onUbicacionError={setError}
-            error={error}
-            enviando={enviando}
-          />
-        </form>
-      </Form>
-
-      <Emergency123Dialog
-        open={modalEmergencia}
-        onContinuar={onContinuarEmergencia}
-        reporteGuardado={reporteGuardadoEnEmergencia && radicadoEmergencia ? radicadoEmergencia : null}
-      />
-    </>
-  );
+  return {
+    form,
+    ubicacion,
+    setUbicacion,
+    fotos,
+    setFotos,
+    error,
+    setError,
+    enviando,
+    modalEmergencia,
+    reporteGuardadoEnEmergencia,
+    radicadoEmergencia,
+    enviarReporte,
+    onContinuarEmergencia,
+  };
 }

@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Phone, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,14 +21,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { moderacionService } from '@/api/moderacion/moderacion.service';
-import type {
-  IngenieroDisponible,
-  MotivoDescarte,
-  ReporteCola,
-  ValidarResponse,
-} from '@/types/moderation';
-import type { FotoResumen } from '@/types/revision';
+import {
+  puedeAsignarModeracion,
+  useModerationPage,
+} from '@/pages/ModerationPage/hooks/useModerationPage';
+import { useModerationDetalle } from '@/pages/ModerationPage/hooks/useModerationDetalle';
+import type { ReporteCola } from '@/types/moderation';
 
 const ETIQUETA_ESTADO: Record<string, string> = {
   validado: 'Validado',
@@ -45,18 +41,6 @@ const ETIQUETA_ESTADO: Record<string, string> = {
 
 function formatearFecha(iso: string) {
   return new Date(iso).toLocaleString('es-CO');
-}
-
-const ETIQUETA_MOTIVO_DESCARTE: Record<MotivoDescarte, string> = {
-  duplicado: 'duplicado',
-  no_contesta: 'no contesta',
-  fuera_de_zona: 'fuera de zona',
-  spam: 'spam',
-  otro: 'otro',
-};
-
-function puedeAsignar(reporte: ReporteCola) {
-  return reporte.estado === 'validado' || reporte.estado === 'vencido';
 }
 
 function EliminarReporteDialog({
@@ -124,109 +108,23 @@ function DetalleReporte({
   onVolver: () => void;
   onActualizado: () => void;
 }) {
-  const asignacionDirecta = puedeAsignar(reporte);
-  const [notas, setNotas] = useState('');
-  const [ingenieros, setIngenieros] = useState<IngenieroDisponible[]>([]);
-  const [ingenieroId, setIngenieroId] = useState('');
-  const [resultado, setResultado] = useState<ValidarResponse | null>(
-    asignacionDirecta
-      ? {
-          ok: true,
-          requiere_nivel_a: reporte.requiere_nivel_a,
-          motivos: reporte.motivo_escalacion ?? [],
-        }
-      : null,
-  );
-  const [fotos, setFotos] = useState<FotoResumen[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(false);
-
-  useEffect(() => {
-    moderacionService.fotosReporte(reporte.uuid)
-      .then(setFotos)
-      .catch(() => setFotos([]));
-  }, [reporte.uuid]);
-
-  useEffect(() => {
-    if (asignacionDirecta) {
-      moderacionService.listarIngenieros()
-        .then(setIngenieros)
-        .catch(() => {});
-    }
-  }, [asignacionDirecta]);
-
-  useEffect(() => {
-    if (resultado && !ingenieros.length) {
-      moderacionService.listarIngenieros()
-        .then(setIngenieros)
-        .catch(() => {});
-    }
-  }, [resultado, ingenieros.length]);
-
-  const validar = async () => {
-    setError(null);
-    setCargando(true);
-    try {
-      const r = await moderacionService.validar(reporte.uuid, {
-        notas_llamada: notas,
-      });
-      setResultado(r);
-      toast.success('Reporte validado', {
-        description: reporte.consecutivo ?? reporte.uuid,
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo validar';
-      setError(msg);
-      toast.error('No se pudo validar', { description: msg });
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const descartar = async (motivo: MotivoDescarte) => {
-    setError(null);
-    setCargando(true);
-    try {
-      await moderacionService.descartar(reporte.uuid, motivo);
-      toast.success('Reporte descartado', {
-        description: `${reporte.consecutivo ?? reporte.uuid} — ${ETIQUETA_MOTIVO_DESCARTE[motivo]}`,
-      });
-      onActualizado();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo descartar';
-      setError(msg);
-      toast.error('No se pudo descartar', { description: msg });
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const asignar = async () => {
-    setError(null);
-    setCargando(true);
-    try {
-      await moderacionService.asignar(reporte.uuid, {
-        ingeniero_id: Number(ingenieroId),
-      });
-      const ingeniero = ingenieros.find((i) => String(i.id) === ingenieroId);
-      toast.success('Ingeniero asignado', {
-        description: ingeniero
-          ? `${reporte.consecutivo ?? reporte.uuid} → ${ingeniero.nombre}`
-          : (reporte.consecutivo ?? reporte.uuid),
-      });
-      onActualizado();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo asignar';
-      setError(msg);
-      toast.error('No se pudo asignar', { description: msg });
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const requiereA = resultado?.requiere_nivel_a;
-  const elegibles = requiereA ? ingenieros.filter((i) => i.rol === 'ingeniero_a') : ingenieros;
-  const soloLectura = !reporte.en_cola && !asignacionDirecta;
+  const {
+    asignacionDirecta,
+    notas,
+    setNotas,
+    ingenieroId,
+    setIngenieroId,
+    resultado,
+    fotos,
+    error,
+    cargando,
+    requiereA,
+    elegibles,
+    soloLectura,
+    validar,
+    descartar,
+    asignar,
+  } = useModerationDetalle(reporte, onActualizado);
 
   return (
     <Card>
@@ -424,7 +322,7 @@ function TarjetaReporteModeracion({
   onAbrir: () => void;
   onEliminar: () => void;
 }) {
-  const clickable = !atenuada || puedeAsignar(reporte);
+  const clickable = !atenuada || puedeAsignarModeracion(reporte);
 
   return (
     <li
@@ -462,7 +360,7 @@ function FilaReporte({
   onAbrir: () => void;
   onEliminar: () => void;
 }) {
-  const clickable = !atenuada || puedeAsignar(reporte);
+  const clickable = !atenuada || puedeAsignarModeracion(reporte);
 
   return (
     <TableRow
@@ -492,60 +390,20 @@ function FilaReporte({
 }
 
 export function ModerationPage() {
-  const [enCola, setEnCola] = useState<ReporteCola[]>([]);
-  const [historial, setHistorial] = useState<ReporteCola[]>([]);
-  const [seleccionado, setSeleccionado] = useState<ReporteCola | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [eliminandoUuid, setEliminandoUuid] = useState<string | null>(null);
-  const [reporteAEliminar, setReporteAEliminar] = useState<ReporteCola | null>(null);
-
-  const cargarCola = useCallback(async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const r = await moderacionService.obtenerCola();
-      setEnCola(r.en_cola);
-      setHistorial(r.historial);
-      setSeleccionado(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo cargar la cola');
-    } finally {
-      setCargando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void cargarCola();
-  }, [cargarCola]);
-
-  const confirmarEliminacion = async () => {
-    if (!reporteAEliminar) return;
-
-    setEliminandoUuid(reporteAEliminar.uuid);
-    setError(null);
-    try {
-      await moderacionService.eliminarReporte(reporteAEliminar.uuid);
-      toast.success('Reporte eliminado', {
-        description: reporteAEliminar.consecutivo ?? reporteAEliminar.uuid,
-      });
-      if (seleccionado?.uuid === reporteAEliminar.uuid) setSeleccionado(null);
-      setReporteAEliminar(null);
-      await cargarCola();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo eliminar';
-      setError(msg);
-      toast.error('No se pudo eliminar', { description: msg });
-    } finally {
-      setEliminandoUuid(null);
-    }
-  };
-
-  const abrirReporte = (reporte: ReporteCola) => {
-    if (reporte.en_cola || puedeAsignar(reporte)) {
-      setSeleccionado(reporte);
-    }
-  };
+  const {
+    enCola,
+    historial,
+    seleccionado,
+    setSeleccionado,
+    error,
+    cargando,
+    eliminandoUuid,
+    reporteAEliminar,
+    setReporteAEliminar,
+    cargarCola,
+    confirmarEliminacion,
+    abrirReporte,
+  } = useModerationPage();
 
   if (seleccionado) {
     return (
