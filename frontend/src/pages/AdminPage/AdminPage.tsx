@@ -8,7 +8,7 @@ import { AdminRolesTab } from '@/pages/AdminPage/components/AdminRolesTab';
 import { AdminUsersTab } from '@/pages/AdminPage/components/AdminUsersTab';
 
 const adminTabPanelClass = cn(
-  'mt-6 outline-none',
+  'mt-3 outline-none',
   'data-[state=active]:animate-app-in',
   MOTION.durationClass,
   MOTION.easingClass,

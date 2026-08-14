@@ -25,19 +25,16 @@ export function AdminUsersTab() {
   } = useAdminPage();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <Button size="sm" className="w-full shrink-0 sm:w-auto" onClick={() => setDialogCrearAbierto(true)}>
-          <UserPlus className="size-4" />
-          Nueva cuenta
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
 
       <Card>
-        <CardContent className="border-b px-6 py-3 text-base font-medium">
-          Usuarios ({usuarios.length})
+        <CardContent className="flex flex-col gap-3 border-b px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-base font-medium">Usuarios ({usuarios.length})</span>
+          <Button size="sm" className="w-full shrink-0 sm:w-auto" onClick={() => setDialogCrearAbierto(true)}>
+            <UserPlus className="size-4" />
+            Nueva cuenta
+          </Button>
         </CardContent>
         <CardContent className="px-6 pb-4 pt-0">
           {isLoading ? (
