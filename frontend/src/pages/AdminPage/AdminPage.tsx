@@ -1,9 +1,18 @@
 import { PageHeader } from '@/components/common/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MOTION } from '@/constants/motion';
 import { pageHeaders } from '@/constants/page-headers';
 import { usePermissions } from '@/hooks/usePermissions';
+import { cn } from '@/lib/utils';
 import { AdminRolesTab } from '@/pages/AdminPage/components/AdminRolesTab';
 import { AdminUsersTab } from '@/pages/AdminPage/components/AdminUsersTab';
+
+const adminTabPanelClass = cn(
+  'mt-6 outline-none',
+  'data-[state=active]:animate-app-in',
+  MOTION.durationClass,
+  MOTION.easingClass,
+);
 
 export function AdminPage() {
   const { puede } = usePermissions();
@@ -42,13 +51,13 @@ export function AdminPage() {
         </TabsList>
 
         {puedeUsuarios ? (
-          <TabsContent value="usuarios" className="mt-6">
+          <TabsContent value="usuarios" className={adminTabPanelClass}>
             <AdminUsersTab />
           </TabsContent>
         ) : null}
 
         {puedeRoles ? (
-          <TabsContent value="roles" className="mt-6">
+          <TabsContent value="roles" className={adminTabPanelClass}>
             <AdminRolesTab />
           </TabsContent>
         ) : null}
