@@ -54,23 +54,12 @@ export function usePublicNavItems(onAfterAction?: () => void): NavItem[] {
   ];
 }
 
-export function useStaffNavItems(onAfterAction?: () => void): NavItem[] {
+export function useStaffNavItems(): NavItem[] {
   const { usuario } = useAuth();
-  const { abrirConsulta } = useConsultReport();
-  const cerrar = () => onAfterAction?.();
 
   const items: NavItem[] = [
     { key: 'mapa', label: 'Mapa', icon: Map, to: routes.home },
     { key: 'reportar', label: 'Reportar', icon: FilePen, to: routes.reportar },
-    {
-      key: 'consultar',
-      label: 'Consultar radicado',
-      icon: Search,
-      onClick: () => {
-        abrirConsulta();
-        cerrar();
-      },
-    },
   ];
 
   if (usuario) {

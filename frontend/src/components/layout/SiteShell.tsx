@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HardHat, LogIn, Menu } from 'lucide-react';
+import { HardHat, LogIn, Menu, Search } from 'lucide-react';
 
 import { usePublicNavItems, type NavItem } from '@/components/layout/nav-config';
 import { SidebarMobileTrigger } from '@/components/layout/SidebarMobileTrigger';
+import { StaffHeaderUser } from '@/components/layout/StaffHeaderUser';
 import { SyncQueueBadge } from '@/components/layout/SyncQueueBadge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { getPageHeaderForPath } from '@/constants/page-headers';
 import { routes } from '@/constants/routes';
+import { useConsultReport } from '@/contexts/ConsultReportContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -166,6 +168,7 @@ export function SitePublicHeader() {
 export function SiteStaffHeader() {
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
+  const { abrirConsulta } = useConsultReport();
   const meta = getPageHeaderForPath(pathname);
 
   return (
@@ -190,8 +193,20 @@ export function SiteStaffHeader() {
         <div className="min-w-0 flex-1" />
       )}
 
-      <div className="ml-auto shrink-0">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2 bg-card/80"
+          onClick={() => abrirConsulta()}
+        >
+          <Search className="size-4" />
+          <span className="hidden sm:inline">Consultar radicado</span>
+          <span className="sr-only sm:hidden">Consultar radicado</span>
+        </Button>
         <SyncQueueBadge />
+        <StaffHeaderUser />
       </div>
     </header>
   );

@@ -1,7 +1,9 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { HardHat, LogIn, LogOut } from 'lucide-react';
 
 import { ETIQUETA_ROL, useStaffNavItems, type NavItem } from '@/components/layout/nav-config';
+import { LogoutConfirmDialog } from '@/components/layout/LogoutConfirmDialog';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -76,9 +78,9 @@ function NavMenu({ items }: { items: NavItem[] }) {
 }
 
 function SidebarUsuario() {
-  const { usuario, salir } = useAuth();
-  const navigate = useNavigate();
+  const { usuario } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const cerrar = () => {
     if (isMobile) setOpenMobile(false);
@@ -102,31 +104,35 @@ function SidebarUsuario() {
   }
 
   return (
-    <SidebarFooter className="border-t border-white/10 p-2">
-      <div className="mb-2 min-w-0 rounded-md px-2 py-1.5 group-data-[collapsible=icon]:hidden">
-        <p className="truncate text-sm font-semibold leading-tight">{usuario.nombre}</p>
-        <p className="mt-0.5 text-xs font-medium text-primary-foreground/80">
-          {ETIQUETA_ROL[usuario.rol]}
-        </p>
-        <p className="mt-1 truncate text-xs text-primary-foreground/55">{usuario.email}</p>
-      </div>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            tooltip="Cerrar sesión"
-            className={menuButtonClass}
-            onClick={() => {
-              salir();
-              navigate(routes.home);
-              cerrar();
-            }}
-          >
-            <LogOut />
-            <span>Cerrar sesión</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarFooter>
+    <>
+      <SidebarFooter className="border-t border-white/10 p-2">
+        <div className="mb-2 min-w-0 rounded-md px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+          <p className="truncate text-sm font-semibold leading-tight">{usuario.nombre}</p>
+          <p className="mt-0.5 text-xs font-medium text-primary-foreground/80">
+            {ETIQUETA_ROL[usuario.rol]}
+          </p>
+          <p className="mt-1 truncate text-xs text-primary-foreground/55">{usuario.email}</p>
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Cerrar sesión"
+              className={menuButtonClass}
+              onClick={() => setConfirmOpen(true)}
+            >
+              <LogOut />
+              <span>Cerrar sesión</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <LogoutConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onLoggedOut={cerrar}
+      />
+    </>
   );
 }
 
