@@ -170,7 +170,7 @@ export function SiteStaffHeader() {
   }
 
   return (
-    <header className="site-staff-header flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden">
+    <header className="site-staff-header sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur-sm print:hidden">
       <SidebarMobileTrigger className="-ml-1" aria-label="Abrir menú" />
       <Separator orientation="vertical" className="mr-1 h-4" />
       <div className="ml-auto">

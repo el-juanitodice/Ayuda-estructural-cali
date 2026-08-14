@@ -6,14 +6,17 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  /** Cabecera fija; el scroll ocurre en el contenido debajo (requiere contenedor flex). */
+  pinned?: boolean;
   className?: string;
 }
 
-export function PageHeader({ eyebrow, title, description, actions, className }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, description, actions, pinned, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
-        'mb-5 flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-end sm:justify-between',
+        'flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-end sm:justify-between',
+        pinned ? 'mb-0 shrink-0 bg-background' : 'mb-5',
         className,
       )}
     >

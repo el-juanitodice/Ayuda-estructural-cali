@@ -23,41 +23,44 @@ export function ReportPage() {
   } = useReportPage();
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PageHeader
+        pinned
         eyebrow="Ciudadanía"
         title="Reportar daños"
         description="Describe la situación del predio y marca su ubicación. Un moderador te llamará para confirmar los datos."
       />
 
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((datos) => enviarReporte(datos))}
-          noValidate
-          className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6"
-        >
-          <ReportSituationPanel
-            form={form}
-            fotos={fotos}
-            onFotosChange={setFotos}
-            enviando={enviando}
-          />
-          <ReportDetailsPanel
-            form={form}
-            ubicacion={ubicacion}
-            onUbicacionChange={setUbicacion}
-            onUbicacionError={setError}
-            error={error}
-            enviando={enviando}
-          />
-        </form>
-      </Form>
+      <div className="min-h-0 flex-1 overflow-y-auto pt-4">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((datos) => enviarReporte(datos))}
+            noValidate
+            className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6"
+          >
+            <ReportSituationPanel
+              form={form}
+              fotos={fotos}
+              onFotosChange={setFotos}
+              enviando={enviando}
+            />
+            <ReportDetailsPanel
+              form={form}
+              ubicacion={ubicacion}
+              onUbicacionChange={setUbicacion}
+              onUbicacionError={setError}
+              error={error}
+              enviando={enviando}
+            />
+          </form>
+        </Form>
+      </div>
 
       <Emergency123Dialog
         open={modalEmergencia}
         onContinuar={onContinuarEmergencia}
         reporteGuardado={reporteGuardadoEnEmergencia && radicadoEmergencia ? radicadoEmergencia : null}
       />
-    </>
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 /** Shell con sidebar fijo en desktop; sheet solo en mobile. */
 export function AppShellLayout() {
-  const { pathname, mainClassName, innerClassName, esMapa } = usePageShellClasses();
+  const { pathname, mainClassName, innerClassName, esMapa, esReportar } = usePageShellClasses();
   const isMobile = useIsMobile();
 
   return (
@@ -22,7 +22,7 @@ export function AppShellLayout() {
       <AppSidebar />
       <SidebarInset className="flex min-h-svh min-w-0 flex-1 flex-col">
         <SiteStaffHeader />
-        <div className={cn('min-h-0 flex-1', mainClassName)}>
+        <div className={cn('flex min-h-0 flex-1 flex-col', esReportar && 'overflow-hidden', mainClassName)}>
           <div key={pathname} className={innerClassName}>
             <Outlet />
           </div>

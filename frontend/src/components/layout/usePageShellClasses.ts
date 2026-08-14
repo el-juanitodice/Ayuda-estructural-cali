@@ -18,16 +18,20 @@ export function usePageShellClasses() {
   return {
     pathname,
     esMapa,
+    esReportar,
     mainClassName: cn(
       'min-h-0 flex-1 px-4 py-6 sm:px-6',
       esMapa && 'mx-auto flex w-full max-w-[1400px] flex-col py-4 sm:py-5',
-      esReportar && 'flex flex-col py-4 sm:py-5',
-      !esMapa && (esAnchoCompleto ? 'mx-auto w-full max-w-[1400px]' : 'mx-auto w-full max-w-3xl'),
+      esReportar &&
+        'mx-auto flex w-full max-w-[1400px] flex-col overflow-hidden py-4 sm:py-5',
+      !esMapa &&
+        !esReportar &&
+        (esAnchoCompleto ? 'mx-auto w-full max-w-[1400px]' : 'mx-auto w-full max-w-3xl'),
     ),
     innerClassName: cn(
       MOTION.fadeInClass,
       esMapa && 'flex min-h-0 flex-1 flex-col',
-      esReportar && 'flex min-h-0 flex-1 flex-col',
+      esReportar && 'flex min-h-0 flex-1 flex-col overflow-hidden',
     ),
   };
 }
