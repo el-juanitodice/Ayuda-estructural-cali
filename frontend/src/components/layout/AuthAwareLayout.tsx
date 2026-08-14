@@ -1,11 +1,10 @@
 import { useAuth } from '@/hooks/useAuth';
 import { AppFade } from '@/components/common/AppFade';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { StaffLayout } from '@/components/layout/StaffLayout';
 
-/** Rutas públicas: sidebar del panel si hay sesión, nav superior si no. */
+/** Rutas públicas: navbar arriba (sin sidebar). */
 export function AuthAwareLayout() {
-  const { usuario, cargando } = useAuth();
+  const { cargando } = useAuth();
 
   if (cargando) {
     return (
@@ -15,5 +14,5 @@ export function AuthAwareLayout() {
     );
   }
 
-  return usuario ? <StaffLayout /> : <PublicLayout />;
+  return <PublicLayout />;
 }

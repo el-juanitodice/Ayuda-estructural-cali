@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Mail, Pencil } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { esRolIngeniero, RolSelect } from '@/components/common/RolSelect';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

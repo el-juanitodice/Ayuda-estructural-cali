@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { moderacionService } from '@/api/moderacion/moderacion.service';
 import { puedeAsignarModeracion } from '@/pages/ModerationPage/hooks/useModerationPage';
 import type {

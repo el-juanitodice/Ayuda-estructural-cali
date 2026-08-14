@@ -41,9 +41,9 @@ export function ReportDetailsPanel({
   enviando,
 }: ReportDetailsPanelProps) {
   return (
-    <Card className="flex h-full min-h-0 flex-col">
-      <CardHeader className="border-b pb-3">
-        <CardTitle className="text-base">Datos del inmueble</CardTitle>
+    <Card className="flex h-full min-h-0 flex-col shadow-sm ring-1 ring-border/50">
+      <CardHeader className="border-b bg-muted/20 pb-3">
+        <CardTitle className="font-serif text-lg">Datos del inmueble</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-4 pt-4">

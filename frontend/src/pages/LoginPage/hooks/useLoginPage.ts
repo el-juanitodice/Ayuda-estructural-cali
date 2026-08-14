@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { authService } from '@/api/auth/auth.service';
 import { useAuth } from '@/hooks/useAuth';
 import { destinoPanel } from '@/lib/auth-routing';

@@ -17,11 +17,12 @@ export function usePageShellClasses() {
 
   return {
     pathname,
+    esMapa,
     mainClassName: cn(
-      'min-h-0 flex-1 px-4 py-6',
-      esMapa && 'flex flex-col py-4',
-      esReportar && 'flex flex-col py-4',
-      !esMapa && (esAnchoCompleto ? 'w-full' : 'mx-auto w-full max-w-3xl'),
+      'min-h-0 flex-1 px-4 py-6 sm:px-6',
+      esMapa && 'mx-auto flex w-full max-w-[1400px] flex-col py-4 sm:py-5',
+      esReportar && 'flex flex-col py-4 sm:py-5',
+      !esMapa && (esAnchoCompleto ? 'mx-auto w-full max-w-[1400px]' : 'mx-auto w-full max-w-3xl'),
     ),
     innerClassName: cn(
       MOTION.fadeInClass,

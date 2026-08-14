@@ -26,9 +26,9 @@ interface ReportSituationPanelProps {
 
 export function ReportSituationPanel({ form, fotos, onFotosChange, enviando }: ReportSituationPanelProps) {
   return (
-    <Card className="flex h-full min-h-0 flex-col">
-      <CardHeader className="border-b pb-3">
-        <CardTitle className="text-base">Situación</CardTitle>
+    <Card className="flex h-full min-h-0 flex-col shadow-sm ring-1 ring-border/50">
+      <CardHeader className="border-b bg-muted/20 pb-3">
+        <CardTitle className="font-serif text-lg">Situación</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-4 pt-4">

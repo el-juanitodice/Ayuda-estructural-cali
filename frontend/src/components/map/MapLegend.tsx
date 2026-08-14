@@ -11,11 +11,12 @@ export function MapLegend({ leyenda }: MapLegendProps) {
 
   return (
     <div
-      className="mt-2 rounded-lg border-2 border-primary bg-card px-3 py-2 text-sm"
+      className="mt-3 rounded-xl border border-border/80 bg-card/90 px-4 py-3 text-sm shadow-sm backdrop-blur-sm"
       role="note"
       aria-label="Leyenda del mapa"
     >
-      <div className="flex flex-wrap gap-x-3.5 gap-y-1">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Leyenda</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-2">
         {LEYENDA_ITEMS.map(({ color, texto }) => (
           <span key={color} className="inline-flex items-center gap-1">
             <i

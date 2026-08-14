@@ -1,7 +1,7 @@
-import { Megaphone } from 'lucide-react';
 import { Emergency123Dialog } from '@/components/report/Emergency123Dialog';
 import { ReportDetailsPanel } from '@/components/report/ReportDetailsPanel';
 import { ReportSituationPanel } from '@/components/report/ReportSituationPanel';
+import { PageHeader } from '@/components/common/PageHeader';
 import { Form } from '@/components/ui/form';
 import { useReportPage } from '@/pages/ReportPage/hooks/useReportPage';
 
@@ -24,10 +24,11 @@ export function ReportPage() {
 
   return (
     <>
-      <div className="mb-3 flex items-center gap-2">
-        <Megaphone className="size-5 text-primary" aria-hidden />
-        <h1 className="text-lg font-semibold">Reportar daños</h1>
-      </div>
+      <PageHeader
+        eyebrow="Ciudadanía"
+        title="Reportar daños"
+        description="Describe la situación del predio y marca su ubicación. Un moderador te llamará para confirmar los datos."
+      />
 
       <Form {...form}>
         <form

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, WifiOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { SISTEMAS_ESTRUCTURALES, elementosEstructurales } from '@shared/ais.js';
 import { DamageMatrix } from '@/components/campo/DamageMatrix';
 import { ReviewPhotoGallery } from '@/components/revision/ReviewPhotoGallery';

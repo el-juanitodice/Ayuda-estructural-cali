@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { requiereLlamar123 } from '@shared/ais.js';
 import { valoresInicialesReporte, type ReporteForm } from '@/components/report/report-form.types';
 import { useConsultReport } from '@/contexts/ConsultReportContext';

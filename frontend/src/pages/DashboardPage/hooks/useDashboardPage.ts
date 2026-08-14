@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { tableroService } from '@/api/tablero/tablero.service';
 import type {
   CoberturaTableroResponse,

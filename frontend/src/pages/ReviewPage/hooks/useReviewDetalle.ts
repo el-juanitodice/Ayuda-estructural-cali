@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { ETIQUETA_HABITABILIDAD, verificarHabitabilidad } from '@shared/ais.js';
 import { authService } from '@/api/auth/auth.service';
 import { campoService } from '@/api/campo/campo.service';

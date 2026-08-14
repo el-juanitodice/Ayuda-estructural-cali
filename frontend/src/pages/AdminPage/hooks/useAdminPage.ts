@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { adminService } from '@/api/admin/admin.service';
 import { useAuth } from '@/hooks/useAuth';
 import type {
