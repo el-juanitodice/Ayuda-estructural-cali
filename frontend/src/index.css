@@ -1,7 +1,8 @@
 @import 'tailwindcss';
+@source "../src";
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
+@variant dark (&:is(.dark *));
 
 /*
  * Ayuda Estructural Cali — tokens shadcn en CSS (@theme).
